@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { cardGamesApi, profilesApi, supabase } from '../supabase'
 import Modal from './Modal'
 
-const scoreOptions = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A1', 'A2', 'A3', 'WIN']
+const scoreOptions = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A1', 'A2', 'A3', 'WINA1', 'WINA2', 'WINA3']
 
 const scoreValues = {
   '2': 2,
@@ -20,14 +20,21 @@ const scoreValues = {
   'A1': 14,
   'A2': 15,
   'A3': 16,
-  'WIN': 999
+  'WIN': 999,
+  'WINA1': 1001,
+  'WINA2': 1002,
+  'WINA3': 1003
+}
+
+const isWinScore = (score) => {
+  return score === 'WIN' || score === 'WINA1' || score === 'WINA2' || score === 'WINA3'
 }
 
 const calculateWinner = (scores, team1, team2) => {
-  if (scores.team1 === 'WIN') {
+  if (isWinScore(scores.team1)) {
     return team1
   }
-  if (scores.team2 === 'WIN') {
+  if (isWinScore(scores.team2)) {
     return team2
   }
   const val1 = scoreValues[scores.team1] || 0
@@ -41,7 +48,7 @@ const calculateWinner = (scores, team1, team2) => {
 }
 
 const isScoreTie = (scores) => {
-  if (scores.team1 === 'WIN' || scores.team2 === 'WIN') {
+  if (isWinScore(scores.team1) || isWinScore(scores.team2)) {
     return false
   }
   const val1 = scoreValues[scores.team1] || 0
@@ -56,8 +63,8 @@ const canSaveGame = (game) => {
   if (!game.scores.team1 || !game.scores.team2) {
     return false
   }
-  // 有WIN方可以保存
-  if (game.scores.team1 === 'WIN' || game.scores.team2 === 'WIN') {
+  // 有WIN方（WIN/WINA1/WINA2/WINA3）可以保存
+  if (isWinScore(game.scores.team1) || isWinScore(game.scores.team2)) {
     return true
   }
   // 没有WIN方但比分不同也可以保存（兼容历史记录）
@@ -157,8 +164,6 @@ function CardGames({ showForm: propShowForm, setShowForm: propSetShowForm, showC
       setInternalShowConfig(propShowConfig)
     }
   }, [propShowConfig])
-  
-  const scoreOptions = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A1', 'A2', 'A3', 'WIN']
 
   const loadGames = async () => {
     setIsLoading(true)
