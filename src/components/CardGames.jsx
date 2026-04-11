@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { cardGamesApi, profilesApi, supabase } from '../supabase'
 import Modal from './Modal'
 
-const scoreOptions = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A1', 'A2', 'A3', 'WINA1', 'WINA2', 'WINA3']
+const scoreOptions = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A1', 'A2', 'A3', 'WIN A1', 'WIN A2', 'WIN A3']
 
 const scoreValues = {
   '2': 2,
@@ -20,14 +20,13 @@ const scoreValues = {
   'A1': 14,
   'A2': 15,
   'A3': 16,
-  'WIN': 999,
-  'WINA1': 1001,
-  'WINA2': 1002,
-  'WINA3': 1003
+  'WIN A1': 1001,
+  'WIN A2': 1002,
+  'WIN A3': 1003
 }
 
 const isWinScore = (score) => {
-  return score === 'WIN' || score === 'WINA1' || score === 'WINA2' || score === 'WINA3'
+  return score === 'WIN A1' || score === 'WIN A2' || score === 'WIN A3'
 }
 
 const calculateWinner = (scores, team1, team2) => {
