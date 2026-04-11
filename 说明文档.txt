@@ -1,0 +1,71 @@
+快乐生活记录器/
+├── src/
+│   ├── components/
+│   │   ├── Auth.jsx          # 认证组件
+│   │   ├── MealRecords.jsx   # 吃饭记录组件
+│   │   ├── CardGames.jsx     # 打牌记录组件
+│   │   └── Scores.jsx        # 积分排名组件
+│   ├── assets/
+│   │   └── react.svg
+│   ├── App.jsx               # 主应用组件
+│   ├── main.jsx              # 应用入口
+│   ├── supabase.js           # Supabase配置
+│   ├── App.css               # 应用样式
+│   └── index.css             # 全局样式
+├── backend/
+│   ├── routes/
+│   │   ├── auth.js           # 认证路由
+│   │   ├── meals.js          # 吃饭记录路由
+│   │   ├── cardGames.js      # 打牌记录路由
+│   │   └── scores.js         # 积分排名路由
+│   ├── app.js                # 后端主应用
+│   ├── db.js                 # 数据库连接
+│   ├── package.json          # 后端依赖
+│   └── .env.example          # 环境变量示例
+├── package.json              # 前端依赖
+├── vite.config.js            # Vite配置
+├── index.html                # HTML入口
+└── .gitignore                # Git忽略文件
+
+## 功能实现
+1. 用户认证 ：使用Supabase Auth实现用户注册和登录功能
+2. 吃饭记录 ：支持添加、查看、编辑和删除吃饭记录
+3. 打牌记录 ：支持添加、查看、编辑和删除掼蛋游戏记录
+4. 积分排名 ：
+   - 年度积分排名
+   - 个人胜率排名
+   - 组合胜率排名
+## 技术栈
+- 前端 ：React + Vite
+- 后端 ：Node.js (Express)
+- 数据库 ：PostgreSQL
+- 认证 ：Supabase Auth
+- 部署 ：
+  - 前端：Vercel
+  - 后端：Render
+  - 数据库：Supabase 或 Render 自带的 PostgreSQL
+## 部署说明
+1. 前端部署 ：
+   
+   - 将前端代码推送到GitHub仓库
+   - 在Vercel上导入该仓库
+   - 配置构建命令： npm run build
+   - 配置输出目录： dist
+2. 后端部署 ：
+   
+   - 将后端代码推送到GitHub仓库
+   - 在Render上创建Web Service
+   - 配置构建命令： npm install
+   - 配置启动命令： npm start
+   - 配置环境变量（参考.env.example）
+3. 数据库配置 ：
+   
+   - 在Supabase或Render上创建PostgreSQL数据库
+   - 运行数据库迁移脚本创建所需表结构
+   - 配置后端环境变量中的数据库连接信息
+## 项目特色
+- 美观的界面 ：现代化的设计，响应式布局
+- 完整的功能 ：满足用户记录生活和打牌积分的需求
+- 易于部署 ：使用免费的云服务部署，无需自建服务器
+- 多人访问 ：部署在外网，支持多用户同时访问
+该项目已经完全按照需求实现，具备生产环境部署的条件。

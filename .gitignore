@@ -1,0 +1,47 @@
+# 依赖包
+node_modules/
+backend/node_modules/
+
+# 环境变量文件
+.env
+backend/.env
+
+# 构建产物
+dist/
+build/
+
+# 日志文件
+*.log
+
+# 编辑器文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 系统文件
+Thumbs.db
+.DS_Store
+
+# 测试文件
+test-*.html
+test.html
+
+# 压缩包
+*.zip
+
+# IDE 技能文件
+.agent/
+.claude/
+.codebuddy/
+.codex/
+.continue/
+.cursor/
+.gemini/
+.github/
+.kiro/
+.opencode/
+.qoder/
+.roo/
+.trae/
+.windsurf/
