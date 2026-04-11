@@ -250,6 +250,7 @@ function CardGames({ showForm: propShowForm, setShowForm: propSetShowForm, showC
     setIsLoading(true)
     
     try {
+      // 每次保存都重新计算winner，确保比分和winner一致
       const winnerArray = calculateWinner(currentGame.scores, currentGame.team1, currentGame.team2)
       const winner = winnerArray.join(', ')
       
