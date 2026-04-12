@@ -564,74 +564,124 @@ function CardGames({ showForm: propShowForm, setShowForm: propSetShowForm, showC
                 <thead>
                   <tr>
                     <th>日期</th>
-                    <th>队伍1</th>
-                    <th>队伍2</th>
+                    <th>胜方</th>
+                    <th>败方</th>
                     <th>比分</th>
-                    <th>获胜者</th>
                     <th>操作</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {(showAll ? games : games.slice(0, 3)).map(game => (
-                    <tr key={game.id}>
-                      <td>{game.date}</td>
-                      <td>{Array.isArray(game.team1) ? game.team1.join(', ') : game.team1}</td>
-                      <td>{Array.isArray(game.team2) ? game.team2.join(', ') : game.team2}</td>
-                      <td>{game.scores?.team1}:{game.scores?.team2}</td>
-                      <td>{game.winner}</td>
-                      <td>
-                        {!showRecordsOnly && (
-                          <>
-                            <button className="edit-btn" onClick={() => handleEdit(game)} disabled={isLoading}>
-                              编辑
-                            </button>
-                            <button className="delete-btn" onClick={() => handleDelete(game.id)} disabled={isLoading}>
-                              删除
-                            </button>
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {(showAll ? games : games.slice(0, 3)).map(game => {
+                    const team1Str = Array.isArray(game.team1) ? game.team1.join(', ') : game.team1
+                    const team2Str = Array.isArray(game.team2) ? game.team2.join(', ') : game.team2
+                    const winnerStr = game.winner || ''
+                    
+                    const isTeam1Winner = winnerStr.includes(team1Str) || team1Str.split(', ').some(p => winnerStr.includes(p))
+                    const isTeam2Winner = winnerStr.includes(team2Str) || team2Str.split(', ').some(p => winnerStr.includes(p))
+                    
+                    let winnerTeam, loserTeam, winnerScore, loserScore
+                    
+                    if (isTeam1Winner) {
+                      winnerTeam = team1Str
+                      loserTeam = team2Str
+                      winnerScore = game.scores?.team1
+                      loserScore = game.scores?.team2
+                    } else if (isTeam2Winner) {
+                      winnerTeam = team2Str
+                      loserTeam = team1Str
+                      winnerScore = game.scores?.team2
+                      loserScore = game.scores?.team1
+                    } else {
+                      winnerTeam = team1Str
+                      loserTeam = team2Str
+                      winnerScore = game.scores?.team1
+                      loserScore = game.scores?.team2
+                    }
+                    
+                    return (
+                      <tr key={game.id}>
+                        <td>{game.date}</td>
+                        <td style={{ color: 'var(--soft-cyan)', fontWeight: '600' }}>{winnerTeam}</td>
+                        <td>{loserTeam}</td>
+                        <td>{winnerScore}:{loserScore}</td>
+                        <td>
+                          {!showRecordsOnly && (
+                            <>
+                              <button className="edit-btn" onClick={() => handleEdit(game)} disabled={isLoading}>
+                                编辑
+                              </button>
+                              <button className="delete-btn" onClick={() => handleDelete(game.id)} disabled={isLoading}>
+                                删除
+                              </button>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
 
             <div className="mobile-cards">
-              {(showAll ? games : games.slice(0, 3)).map(game => (
-                <div key={game.id} className="mobile-card">
-                  <div className="mobile-card-header">
-                    <div className="mobile-card-date">📅 {game.date}</div>
+              {(showAll ? games : games.slice(0, 3)).map(game => {
+                const team1Str = Array.isArray(game.team1) ? game.team1.join(', ') : game.team1
+                const team2Str = Array.isArray(game.team2) ? game.team2.join(', ') : game.team2
+                const winnerStr = game.winner || ''
+                
+                const isTeam1Winner = winnerStr.includes(team1Str) || team1Str.split(', ').some(p => winnerStr.includes(p))
+                const isTeam2Winner = winnerStr.includes(team2Str) || team2Str.split(', ').some(p => winnerStr.includes(p))
+                
+                let winnerTeam, loserTeam, winnerScore, loserScore
+                
+                if (isTeam1Winner) {
+                  winnerTeam = team1Str
+                  loserTeam = team2Str
+                  winnerScore = game.scores?.team1
+                  loserScore = game.scores?.team2
+                } else if (isTeam2Winner) {
+                  winnerTeam = team2Str
+                  loserTeam = team1Str
+                  winnerScore = game.scores?.team2
+                  loserScore = game.scores?.team1
+                } else {
+                  winnerTeam = team1Str
+                  loserTeam = team2Str
+                  winnerScore = game.scores?.team1
+                  loserScore = game.scores?.team2
+                }
+                
+                return (
+                  <div key={game.id} className="mobile-card">
+                    <div className="mobile-card-header">
+                      <div className="mobile-card-date">📅 {game.date}</div>
+                    </div>
+                    <div className="mobile-card-teams">
+                      <div className="mobile-card-team">
+                        <span className="team-label">胜方:</span>
+                        <span className="team-players" style={{ color: 'var(--soft-cyan)', fontWeight: '600' }}>{winnerTeam}</span>
+                      </div>
+                      <div className="mobile-card-score">
+                        <span className="score-value">{winnerScore} : {loserScore}</span>
+                      </div>
+                      <div className="mobile-card-team">
+                        <span className="team-label">败方:</span>
+                        <span className="team-players">{loserTeam}</span>
+                      </div>
+                    </div>
+                    {!showRecordsOnly && (
+                      <div className="mobile-card-actions">
+                        <button className="edit-btn" onClick={() => handleEdit(game)} disabled={isLoading}>
+                          编辑
+                        </button>
+                        <button className="delete-btn" onClick={() => handleDelete(game.id)} disabled={isLoading}>
+                          删除
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <div className="mobile-card-teams">
-                    <div className="mobile-card-team">
-                      <span className="team-label">队伍1:</span>
-                      <span className="team-players">{Array.isArray(game.team1) ? game.team1.join(', ') : game.team1}</span>
-                    </div>
-                    <div className="mobile-card-score">
-                      <span className="score-value">{game.scores?.team1} : {game.scores?.team2}</span>
-                    </div>
-                    <div className="mobile-card-team">
-                      <span className="team-label">队伍2:</span>
-                      <span className="team-players">{Array.isArray(game.team2) ? game.team2.join(', ') : game.team2}</span>
-                    </div>
-                  </div>
-                  <div className="mobile-card-winner">
-                    <span className="winner-label">🏆 获胜者:</span>
-                    <span className="winner-name">{game.winner}</span>
-                  </div>
-                  {!showRecordsOnly && (
-                    <div className="mobile-card-actions">
-                      <button className="edit-btn" onClick={() => handleEdit(game)} disabled={isLoading}>
-                        编辑
-                      </button>
-                      <button className="delete-btn" onClick={() => handleDelete(game.id)} disabled={isLoading}>
-                        删除
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             {games.length > 3 && (
