@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { cardGamesApi, profilesApi, supabase } from '../supabase'
 import Modal from './Modal'
 
-const scoreOptions = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A1', 'A2', 'A3', 'WIN A1', 'WIN A2', 'WIN A3']
+const regularScoreOptions = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A1', 'A2', 'A3']
+const winScoreOptions = ['WIN A1', 'WIN A2', 'WIN A3']
 
 const scoreValues = {
   '2': 2,
@@ -453,11 +454,23 @@ function CardGames({ showForm: propShowForm, setShowForm: propSetShowForm, showC
               <div className="team-score-section">
                 <label>比分</label>
                 <div className="score-grid">
-                  {scoreOptions.map(score => (
+                  {regularScoreOptions.map(score => (
                     <button
                       key={score}
                       type="button"
                       className={`score-option ${currentGame.scores.team1 === score ? 'selected' : ''}`}
+                      onClick={() => handleScoreChange('team1', score)}
+                    >
+                      {score}
+                    </button>
+                  ))}
+                </div>
+                <div className="score-grid win-score-grid">
+                  {winScoreOptions.map(score => (
+                    <button
+                      key={score}
+                      type="button"
+                      className={`score-option win-score-option ${currentGame.scores.team1 === score ? 'selected' : ''}`}
                       onClick={() => handleScoreChange('team1', score)}
                     >
                       {score}
@@ -485,11 +498,23 @@ function CardGames({ showForm: propShowForm, setShowForm: propSetShowForm, showC
               <div className="team-score-section">
                 <label>比分</label>
                 <div className="score-grid">
-                  {scoreOptions.map(score => (
+                  {regularScoreOptions.map(score => (
                     <button
                       key={score}
                       type="button"
                       className={`score-option ${currentGame.scores.team2 === score ? 'selected' : ''}`}
+                      onClick={() => handleScoreChange('team2', score)}
+                    >
+                      {score}
+                    </button>
+                  ))}
+                </div>
+                <div className="score-grid win-score-grid">
+                  {winScoreOptions.map(score => (
+                    <button
+                      key={score}
+                      type="button"
+                      className={`score-option win-score-option ${currentGame.scores.team2 === score ? 'selected' : ''}`}
                       onClick={() => handleScoreChange('team2', score)}
                     >
                       {score}
