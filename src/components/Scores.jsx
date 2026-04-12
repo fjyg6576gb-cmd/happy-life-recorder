@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { PlayerWinRateChart } from './Charts'
+import { PlayerWinRateChart, TeamWinRateChart } from './Charts'
 import { cardGamesApi, profilesApi } from '../supabase'
 
 function Scores() {
@@ -286,9 +286,18 @@ function Scores() {
       
       {winRates.length > 0 && (
         <div className="score-section">
-          <h3>胜率图表</h3>
+          <h3>个人胜率图表</h3>
           <div className="chart-container">
             <PlayerWinRateChart winRates={winRates} />
+          </div>
+        </div>
+      )}
+      
+      {teamWinRates.length > 0 && (
+        <div className="score-section">
+          <h3>组合胜率图表</h3>
+          <div className="chart-container">
+            <TeamWinRateChart teamWinRates={teamWinRates} />
           </div>
         </div>
       )}

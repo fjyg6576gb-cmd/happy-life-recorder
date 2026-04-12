@@ -203,6 +203,87 @@ function PlayerWinRateChart({ winRates }) {
   return <ReactECharts option={option} style={{ height: '400px' }} />
 }
 
+function TeamWinRateChart({ teamWinRates }) {
+  const option = {
+    title: {
+      text: '组合胜率排名',
+      left: 'center',
+      textStyle: {
+        color: '#4ecdc4',
+        fontSize: 18,
+        fontWeight: 'bold'
+      }
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      },
+      formatter: (params) => {
+        const data = params[0]
+        return `${data.name}<br/>胜率: ${data.value}%<br/>总场次: ${teamWinRates[data.dataIndex].total_games}<br/>获胜场次: ${teamWinRates[data.dataIndex].wins}`
+      }
+    },
+    xAxis: {
+      type: 'value',
+      name: '胜率 (%)',
+      max: 100,
+      nameTextStyle: {
+        color: '#ffffff'
+      },
+      axisLabel: {
+        color: '#ffffff',
+        fontSize: 14,
+        fontWeight: 'bold'
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#7aa2f7'
+        }
+      },
+      splitLine: {
+        lineStyle: {
+          color: 'rgba(122, 162, 247, 0.3)'
+        }
+      }
+    },
+    yAxis: {
+      type: 'category',
+      data: teamWinRates.map(r => `${r.user1_name} + ${r.user2_name}`).reverse(),
+      axisLabel: {
+        color: '#ffffff',
+        fontSize: 12,
+        fontWeight: 'bold'
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#7aa2f7'
+        }
+      }
+    },
+    series: [
+      {
+        name: '胜率',
+        type: 'bar',
+        data: teamWinRates.map(r => r.win_rate).reverse(),
+        itemStyle: {
+          color: '#ee6666'
+        },
+        label: {
+          show: true,
+          position: 'right',
+          formatter: '{c}%',
+          color: '#ffffff',
+          fontSize: 14,
+          fontWeight: 'bold'
+        }
+      }
+    ]
+  }
+
+  return <ReactECharts option={option} style={{ height: '400px' }} />
+}
+
 function ParticipationChart({ participationStats }) {
   const participants = Object.keys(participationStats).sort((a, b) => participationStats[b] - participationStats[a])
   const counts = participants.map(p => participationStats[p])
@@ -282,4 +363,4 @@ function ParticipationChart({ participationStats }) {
   return <ReactECharts option={option} style={{ height: '400px' }} />
 }
 
-export { MealLocationChart, MealMonthlyChart, PlayerWinRateChart, ParticipationChart }
+export { MealLocationChart, MealMonthlyChart, PlayerWinRateChart, TeamWinRateChart, ParticipationChart }
