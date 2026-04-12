@@ -357,11 +357,38 @@ function CardGames({ showForm: propShowForm, setShowForm: propSetShowForm, showC
   }
 
   const handleEdit = (game) => {
+    // 检查旧记录中的用户是否在当前列表中，如果不在，尝试修复
+    let team1 = Array.isArray(game.team1) ? [...game.team1] : []
+    let team2 = Array.isArray(game.team2) ? [...game.team2] : []
+    
+    // 尝试匹配旧用户到新用户（处理改名的情况）
+    const fixTeam = (team) => {
+      return team.map(playerName => {
+        // 如果在当前列表中，直接返回
+        if (players.includes(playerName)) {
+          return playerName
+        }
+        // 尝试模糊匹配（去掉括号部分）
+        const baseName = playerName.replace(/（.*?）/g, '').trim()
+        const matchedPlayer = players.find(p => p.replace(/（.*?）/g, '').trim() === baseName)
+        if (matchedPlayer) {
+          console.log(`用户改名匹配: ${playerName} -> ${matchedPlayer}`)
+          return matchedPlayer
+        }
+        // 如果找不到匹配，保留原名（用户可能需要手动调整）
+        console.log(`警告：用户 ${playerName} 不在当前列表中，可能已改名或删除`)
+        return playerName
+      })
+    }
+    
+    team1 = fixTeam(team1)
+    team2 = fixTeam(team2)
+    
     setCurrentGame({
       id: game.id,
       date: game.date,
-      team1: Array.isArray(game.team1) ? game.team1 : [],
-      team2: Array.isArray(game.team2) ? game.team2 : [],
+      team1: team1,
+      team2: team2,
       scores: game.scores || { team1: '2', team2: '2' },
       winner: game.winner || ''
     })
