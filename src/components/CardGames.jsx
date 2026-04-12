@@ -361,6 +361,15 @@ function CardGames({ showForm: propShowForm, setShowForm: propSetShowForm, showC
     let team1 = Array.isArray(game.team1) ? [...game.team1] : []
     let team2 = Array.isArray(game.team2) ? [...game.team2] : []
     
+    // 提取纯名字（去掉括号和预注册标记）
+    const extractPureName = (name) => {
+      return name
+        .replace(/（.*?）/g, '') // 去掉中文括号
+        .replace(/\(.*?\)/g, '') // 去掉英文括号
+        .replace(/预注册/g, '') // 去掉预注册
+        .trim()
+    }
+    
     // 尝试匹配旧用户到新用户（处理改名的情况）
     const fixTeam = (team) => {
       return team.map(playerName => {
@@ -368,13 +377,25 @@ function CardGames({ showForm: propShowForm, setShowForm: propSetShowForm, showC
         if (players.includes(playerName)) {
           return playerName
         }
-        // 尝试模糊匹配（去掉括号部分）
-        const baseName = playerName.replace(/（.*?）/g, '').trim()
-        const matchedPlayer = players.find(p => p.replace(/（.*?）/g, '').trim() === baseName)
+        
+        // 方法1：精确匹配纯名字
+        const oldPureName = extractPureName(playerName)
+        let matchedPlayer = players.find(p => extractPureName(p) === oldPureName)
         if (matchedPlayer) {
-          console.log(`用户改名匹配: ${playerName} -> ${matchedPlayer}`)
+          console.log(`用户改名匹配（精确）: ${playerName} -> ${matchedPlayer}`)
           return matchedPlayer
         }
+        
+        // 方法2：部分匹配（只要名字中有相同的部分）
+        matchedPlayer = players.find(p => {
+          const pPure = extractPureName(p)
+          return oldPureName.includes(pPure) || pPure.includes(oldPureName)
+        })
+        if (matchedPlayer) {
+          console.log(`用户改名匹配（部分）: ${playerName} -> ${matchedPlayer}`)
+          return matchedPlayer
+        }
+        
         // 如果找不到匹配，保留原名（用户可能需要手动调整）
         console.log(`警告：用户 ${playerName} 不在当前列表中，可能已改名或删除`)
         return playerName
