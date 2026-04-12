@@ -361,72 +361,88 @@ function CardGames({ showForm: propShowForm, setShowForm: propSetShowForm, showC
     let team1 = Array.isArray(game.team1) ? [...game.team1] : []
     let team2 = Array.isArray(game.team2) ? [...game.team2] : []
     
+    console.log('========== 开始编辑记录 ==========')
     console.log('当前队员列表:', players)
     
-    // 提取所有可能的名字片段
-    const extractAllNameParts = (name) => {
-      const parts = new Set()
-      // 纯名字（去掉所有括号和预注册）
-      const pureName = name
-        .replace(/（.*?）/g, '')
-        .replace(/\(.*?\)/g, '')
-        .replace(/预注册/g, '')
-        .trim()
-      if (pureName) parts.add(pureName)
+    // 提取所有可能的关键字（包括括号内的内容）
+    const extractKeywords = (name) => {
+      const keywords = new Set()
       
-      // 中文括号内的内容
+      // 添加完整名字
+      keywords.add(name)
+      
+      // 提取中文括号内的内容
       const chineseMatches = name.match(/（(.*?)）/g)
       if (chineseMatches) {
         chineseMatches.forEach(m => {
           const content = m.replace(/[（）]/g, '').trim()
-          if (content) parts.add(content)
+          if (content) keywords.add(content)
         })
       }
       
-      // 英文括号内的内容
+      // 提取英文括号内的内容
       const englishMatches = name.match(/\((.*?)\)/g)
       if (englishMatches) {
         englishMatches.forEach(m => {
           const content = m.replace(/[()]/g, '').trim()
-          if (content && content !== '预注册') parts.add(content)
+          if (content && content !== '预注册') keywords.add(content)
         })
       }
       
-      return Array.from(parts)
+      // 清理后的名字（去掉所有括号和预注册）
+      const clean = name
+        .replace(/（.*?）/g, '')
+        .replace(/\(.*?\)/g, '')
+        .replace(/预注册/g, '')
+        .trim()
+      if (clean) keywords.add(clean)
+      
+      return Array.from(keywords)
     }
     
     // 尝试匹配旧用户到新用户（处理改名的情况）
     const fixTeam = (team) => {
       return team.map(playerName => {
+        console.log('----------')
         console.log('尝试匹配用户:', playerName)
         
         // 如果在当前列表中，直接返回
         if (players.includes(playerName)) {
-          console.log('直接匹配成功:', playerName)
+          console.log('✅ 直接匹配成功:', playerName)
           return playerName
         }
         
-        const oldParts = extractAllNameParts(playerName)
-        console.log('旧用户片段:', oldParts)
+        const oldKeywords = extractKeywords(playerName)
+        console.log('旧用户关键字:', oldKeywords)
         
-        // 遍历所有可能的新用户，找匹配
+        // 遍历所有新用户
         for (const newPlayer of players) {
-          const newParts = extractAllNameParts(newPlayer)
-          console.log('  检查新用户:', newPlayer, '片段:', newParts)
+          const newKeywords = extractKeywords(newPlayer)
+          console.log(`  检查新用户: ${newPlayer}, 关键字: ${newKeywords}`)
           
-          // 只要有任意一个片段匹配，就匹配成功
-          const hasMatch = oldParts.some(oldP => 
-            newParts.some(newP => oldP === newP)
-          )
+          // 检查是否有任意关键字匹配
+          for (const oldKw of oldKeywords) {
+            for (const newKw of newKeywords) {
+              if (oldKw && newKw && oldKw === newKw) {
+                console.log(`✅ 用户改名匹配（关键字）: ${playerName} -> ${newPlayer} (匹配: ${oldKw})`)
+                return newPlayer
+              }
+            }
+          }
           
-          if (hasMatch) {
-            console.log(`用户改名匹配成功: ${playerName} -> ${newPlayer}`)
-            return newPlayer
+          // 检查是否有包含关系
+          for (const oldKw of oldKeywords) {
+            for (const newKw of newKeywords) {
+              if (oldKw && newKw && (oldKw.includes(newKw) || newKw.includes(oldKw))) {
+                console.log(`✅ 用户改名匹配（包含）: ${playerName} -> ${newPlayer} (${oldKw} ~ ${newKw})`)
+                return newPlayer
+              }
+            }
           }
         }
         
         // 如果找不到匹配，保留原名（用户可能需要手动调整）
-        console.log(`警告：用户 ${playerName} 不在当前列表中，可能已改名或删除`)
+        console.log(`❌ 警告：用户 ${playerName} 不在当前列表中，可能已改名或删除`)
         return playerName
       })
     }
