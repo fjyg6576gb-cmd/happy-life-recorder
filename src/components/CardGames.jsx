@@ -90,6 +90,7 @@ function CardGames({ showForm: propShowForm, setShowForm: propSetShowForm, showC
   const [user, setUser] = useState(null)
   const [players, setPlayers] = useState([])
   const [playerObjects, setPlayerObjects] = useState([])
+  const [linkedPreUsers, setLinkedPreUsers] = useState([])
   
   useEffect(() => {
     const getUser = async () => {
@@ -124,6 +125,32 @@ function CardGames({ showForm: propShowForm, setShowForm: propSetShowForm, showC
   };
 
   const formatSinglePlayerName = (playerNameStr) => {
+    // 首先检查是否是已关联的预注册用户，如果是，返回对应的真实用户
+    for (const preUser of linkedPreUsers) {
+      // 提取预注册用户的所有可能的关键字
+      const preUserKeywords = new Set()
+      
+      // 添加预注册用户的各种格式的名字
+      const preUserFormatted = preUser.nickname && preUser.name 
+        ? `${preUser.nickname}（${preUser.name}）`
+        : preUser.nickname || preUser.name
+      preUserKeywords.add(preUserFormatted)
+      preUserKeywords.add(preUser.nickname)
+      preUserKeywords.add(preUser.name)
+      preUserKeywords.add(`${preUserFormatted} (预注册)`)
+      if (preUser.nickname) preUserKeywords.add(`${preUser.nickname} (预注册)`)
+      if (preUser.name) preUserKeywords.add(`${preUser.name} (预注册)`)
+      
+      // 检查是否匹配
+      if (preUserKeywords.has(playerNameStr)) {
+        // 找到对应的真实用户
+        const linkedUser = playerObjects.find(p => p.id === preUser.linked_user_id)
+        if (linkedUser) {
+          return formatPlayerName(linkedUser)
+        }
+      }
+    }
+    
     // 从 playerObjects 中找到对应的用户对象
     const player = playerObjects.find(p => {
       // 匹配多种可能的字段
@@ -160,15 +187,22 @@ function CardGames({ showForm: propShowForm, setShowForm: propSetShowForm, showC
       console.log('从 pre_registered_users 表获取到的数据:', preRegisteredResult.data)
       
       let allPlayerObjects = []
+      let linkedUsers = []
       if (!profilesResult.error && profilesResult.data) {
         allPlayerObjects = [...profilesResult.data]
       }
       if (!preRegisteredResult.error && preRegisteredResult.data) {
-        // 为预注册用户添加 isPreRegistered 标记
-        const preUsersWithFlag = preRegisteredResult.data.map(u => ({
-          ...u,
-          isPreRegistered: true
-        }))
+        // 保存已关联的预注册用户，用于旧记录匹配
+        linkedUsers = preRegisteredResult.data.filter(u => u.is_linked)
+        setLinkedPreUsers(linkedUsers)
+        
+        // 为预注册用户添加 isPreRegistered 标记，并过滤掉已关联的预注册用户
+        const preUsersWithFlag = preRegisteredResult.data
+          .filter(u => !u.is_linked)
+          .map(u => ({
+            ...u,
+            isPreRegistered: true
+          }))
         allPlayerObjects = [...allPlayerObjects, ...preUsersWithFlag]
       }
       
@@ -431,6 +465,34 @@ function CardGames({ showForm: propShowForm, setShowForm: propSetShowForm, showC
       return team.map(playerName => {
         console.log('----------')
         console.log('尝试匹配用户:', playerName)
+        
+        // 首先检查是否是已关联的预注册用户
+        for (const preUser of linkedPreUsers) {
+          // 提取预注册用户的所有可能的关键字
+          const preUserKeywords = new Set()
+          
+          // 添加预注册用户的各种格式的名字
+          const preUserFormatted = preUser.nickname && preUser.name 
+            ? `${preUser.nickname}（${preUser.name}）`
+            : preUser.nickname || preUser.name
+          preUserKeywords.add(preUserFormatted)
+          preUserKeywords.add(preUser.nickname)
+          preUserKeywords.add(preUser.name)
+          preUserKeywords.add(`${preUserFormatted} (预注册)`)
+          if (preUser.nickname) preUserKeywords.add(`${preUser.nickname} (预注册)`)
+          if (preUser.name) preUserKeywords.add(`${preUser.name} (预注册)`)
+          
+          // 检查是否匹配
+          if (preUserKeywords.has(playerName)) {
+            // 找到对应的真实用户
+            const linkedUser = playerObjects.find(p => p.id === preUser.linked_user_id)
+            if (linkedUser) {
+              const linkedUserName = formatPlayerName(linkedUser)
+              console.log(`✅ 预注册用户关联匹配: ${playerName} -> ${linkedUserName}`)
+              return linkedUserName
+            }
+          }
+        }
         
         // 如果在当前列表中，直接返回
         if (players.includes(playerName)) {
