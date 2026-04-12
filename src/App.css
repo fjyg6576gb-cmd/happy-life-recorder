@@ -1507,10 +1507,12 @@ body::before {
 
   /* 移动端表格优化 - 桌面端显示表格，移动端显示卡片 */
   .desktop-table {
-    display: block;
+    display: none;
   }
   .mobile-cards {
-    display: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
   }
 
   /* 移动端批量操作 */
