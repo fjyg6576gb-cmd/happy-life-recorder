@@ -123,6 +123,32 @@ function CardGames({ showForm: propShowForm, setShowForm: propSetShowForm, showC
     return name;
   };
 
+  const formatSinglePlayerName = (playerNameStr) => {
+    // 从 playerObjects 中找到对应的用户对象
+    const player = playerObjects.find(p => {
+      // 匹配多种可能的字段
+      if (p.nickname === playerNameStr) return true
+      if (p.name === playerNameStr) return true
+      if (p.display_name === playerNameStr) return true
+      // 如果是预注册用户，匹配 display_name 或 name
+      if (p.isPreRegistered && p.display_name === playerNameStr) return true
+      if (p.isPreRegistered && p.name === playerNameStr) return true
+      // 匹配格式化后的名字
+      if (formatPlayerName(p) === playerNameStr) return true
+      return false
+    })
+    
+    if (player) {
+      return formatPlayerName(player)
+    }
+    return playerNameStr
+  };
+
+  const formatTeamPlayers = (players) => {
+    const playerArray = Array.isArray(players) ? players : players.split(', ')
+    return playerArray.map(p => formatSinglePlayerName(p)).join(', ')
+  };
+
   const loadPlayers = async () => {
     try {
       const [profilesResult, preRegisteredResult] = await Promise.all([
@@ -675,18 +701,18 @@ function CardGames({ showForm: propShowForm, setShowForm: propSetShowForm, showC
                     let winnerTeam, loserTeam, winnerScore, loserScore
                     
                     if (isTeam1Winner) {
-                      winnerTeam = team1Str
-                      loserTeam = team2Str
+                      winnerTeam = formatTeamPlayers(game.team1)
+                      loserTeam = formatTeamPlayers(game.team2)
                       winnerScore = game.scores?.team1
                       loserScore = game.scores?.team2
                     } else if (isTeam2Winner) {
-                      winnerTeam = team2Str
-                      loserTeam = team1Str
+                      winnerTeam = formatTeamPlayers(game.team2)
+                      loserTeam = formatTeamPlayers(game.team1)
                       winnerScore = game.scores?.team2
                       loserScore = game.scores?.team1
                     } else {
-                      winnerTeam = team1Str
-                      loserTeam = team2Str
+                      winnerTeam = formatTeamPlayers(game.team1)
+                      loserTeam = formatTeamPlayers(game.team2)
                       winnerScore = game.scores?.team1
                       loserScore = game.scores?.team2
                     }
@@ -728,18 +754,18 @@ function CardGames({ showForm: propShowForm, setShowForm: propSetShowForm, showC
                 let winnerTeam, loserTeam, winnerScore, loserScore
                 
                 if (isTeam1Winner) {
-                  winnerTeam = team1Str
-                  loserTeam = team2Str
+                  winnerTeam = formatTeamPlayers(game.team1)
+                  loserTeam = formatTeamPlayers(game.team2)
                   winnerScore = game.scores?.team1
                   loserScore = game.scores?.team2
                 } else if (isTeam2Winner) {
-                  winnerTeam = team2Str
-                  loserTeam = team1Str
+                  winnerTeam = formatTeamPlayers(game.team2)
+                  loserTeam = formatTeamPlayers(game.team1)
                   winnerScore = game.scores?.team2
                   loserScore = game.scores?.team1
                 } else {
-                  winnerTeam = team1Str
-                  loserTeam = team2Str
+                  winnerTeam = formatTeamPlayers(game.team1)
+                  loserTeam = formatTeamPlayers(game.team2)
                   winnerScore = game.scores?.team1
                   loserScore = game.scores?.team2
                 }

@@ -145,7 +145,7 @@ function Scores() {
     const winRatesList = Object.entries(playerStats)
       .map(([player, stats]) => ({
         user_id: player,
-        user_name: player,
+        user_name: formatPlayerName(player),
         total_games: stats.total_games,
         wins: stats.wins,
         win_rate: stats.total_games > 0 ? Math.round((stats.wins / stats.total_games) * 10000) / 100 : 0
@@ -155,9 +155,9 @@ function Scores() {
     const teamWinRatesList = Object.entries(teamStats)
       .map(([key, stats]) => ({
         user1: stats.players[0],
-        user1_name: stats.players[0],
+        user1_name: formatPlayerName(stats.players[0]),
         user2: stats.players[1],
-        user2_name: stats.players[1],
+        user2_name: formatPlayerName(stats.players[1]),
         total_games: stats.total_games,
         wins: stats.wins,
         win_rate: stats.total_games > 0 ? Math.round((stats.wins / stats.total_games) * 10000) / 100 : 0
