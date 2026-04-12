@@ -370,6 +370,15 @@ function CardGames({ showForm: propShowForm, setShowForm: propSetShowForm, showC
         .trim()
     }
     
+    // 提取括号里的名字
+    const extractNameInBrackets = (name) => {
+      const chineseMatch = name.match(/（(.*?)）/)
+      if (chineseMatch) return chineseMatch[1].trim()
+      const englishMatch = name.match(/\((.*?)\)/)
+      if (englishMatch) return englishMatch[1].trim()
+      return null
+    }
+    
     // 尝试匹配旧用户到新用户（处理改名的情况）
     const fixTeam = (team) => {
       return team.map(playerName => {
@@ -386,7 +395,21 @@ function CardGames({ showForm: propShowForm, setShowForm: propSetShowForm, showC
           return matchedPlayer
         }
         
-        // 方法2：部分匹配（只要名字中有相同的部分）
+        // 方法2：匹配括号里的名字
+        const nameInBrackets = extractNameInBrackets(playerName)
+        if (nameInBrackets) {
+          matchedPlayer = players.find(p => {
+            const pPure = extractPureName(p)
+            const pInBrackets = extractNameInBrackets(p)
+            return pPure === nameInBrackets || pInBrackets === nameInBrackets
+          })
+          if (matchedPlayer) {
+            console.log(`用户改名匹配（括号内）: ${playerName} -> ${matchedPlayer}`)
+            return matchedPlayer
+          }
+        }
+        
+        // 方法3：部分匹配（只要名字中有相同的部分）
         matchedPlayer = players.find(p => {
           const pPure = extractPureName(p)
           return oldPureName.includes(pPure) || pPure.includes(oldPureName)
