@@ -129,7 +129,59 @@ function Scores() {
     const teamStats = {}
     const scoreStats = {}
 
-    // 过滤所选年份的记录
+    // 胜率统计：处理所有年份的记录
+    games.forEach(game => {
+      let team1Players = Array.isArray(game.team1) ? game.team1 : game.team1.split(', ')
+      let team2Players = Array.isArray(game.team2) ? game.team2 : game.team2.split(', ')
+      let winner = game.winner ? game.winner.split(', ') : []
+      
+      // 替换旧用户名为新用户名
+      team1Players = team1Players.map(p => getMappedPlayerName(p))
+      team2Players = team2Players.map(p => getMappedPlayerName(p))
+      winner = winner.map(p => getMappedPlayerName(p))
+
+      // 胜率统计
+      team1Players.forEach(player => {
+        if (!playerStats[player]) {
+          playerStats[player] = { total_games: 0, wins: 0 }
+        }
+        playerStats[player].total_games++
+        if (winner.includes(player)) {
+          playerStats[player].wins++
+        }
+      })
+
+      team2Players.forEach(player => {
+        if (!playerStats[player]) {
+          playerStats[player] = { total_games: 0, wins: 0 }
+        }
+        playerStats[player].total_games++
+        if (winner.includes(player)) {
+          playerStats[player].wins++
+        }
+      })
+
+      const teamKey1 = team1Players.sort().join('+')
+      const teamKey2 = team2Players.sort().join('+')
+      
+      if (!teamStats[teamKey1]) {
+        teamStats[teamKey1] = { total_games: 0, wins: 0, players: team1Players }
+      }
+      teamStats[teamKey1].total_games++
+      if (winner.length > 0 && team1Players.every(p => winner.includes(p))) {
+        teamStats[teamKey1].wins++
+      }
+
+      if (!teamStats[teamKey2]) {
+        teamStats[teamKey2] = { total_games: 0, wins: 0, players: team2Players }
+      }
+      teamStats[teamKey2].total_games++
+      if (winner.length > 0 && team2Players.every(p => winner.includes(p))) {
+        teamStats[teamKey2].wins++
+      }
+    })
+
+    // 积分统计：只处理所选年份的记录
     const filteredGames = games.filter(game => {
       const gameYear = new Date(game.date).getFullYear().toString()
       return gameYear === selectedYear
@@ -171,46 +223,6 @@ function Scores() {
           scoreStats[player].total_score -= 1
         }
       })
-
-      // 胜率统计（所有年份）
-      team1Players.forEach(player => {
-        if (!playerStats[player]) {
-          playerStats[player] = { total_games: 0, wins: 0 }
-        }
-        playerStats[player].total_games++
-        if (winner.includes(player)) {
-          playerStats[player].wins++
-        }
-      })
-
-      team2Players.forEach(player => {
-        if (!playerStats[player]) {
-          playerStats[player] = { total_games: 0, wins: 0 }
-        }
-        playerStats[player].total_games++
-        if (winner.includes(player)) {
-          playerStats[player].wins++
-        }
-      })
-
-      const teamKey1 = team1Players.sort().join('+')
-      const teamKey2 = team2Players.sort().join('+')
-      
-      if (!teamStats[teamKey1]) {
-        teamStats[teamKey1] = { total_games: 0, wins: 0, players: team1Players }
-      }
-      teamStats[teamKey1].total_games++
-      if (winner.length > 0 && team1Players.every(p => winner.includes(p))) {
-        teamStats[teamKey1].wins++
-      }
-
-      if (!teamStats[teamKey2]) {
-        teamStats[teamKey2] = { total_games: 0, wins: 0, players: team2Players }
-      }
-      teamStats[teamKey2].total_games++
-      if (winner.length > 0 && team2Players.every(p => winner.includes(p))) {
-        teamStats[teamKey2].wins++
-      }
     })
 
     const winRatesList = Object.entries(playerStats)
