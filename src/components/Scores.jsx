@@ -13,8 +13,13 @@ function Scores() {
 
   useEffect(() => {
     loadPlayers()
-    loadScores()
-  }, [selectedYear])
+  }, [])
+
+  useEffect(() => {
+    if (players.length > 0) {
+      loadScores()
+    }
+  }, [selectedYear, players, linkedPreUsers])
 
   const formatPlayerName = (playerName) => {
     // 首先检查是否是已关联的预注册用户
