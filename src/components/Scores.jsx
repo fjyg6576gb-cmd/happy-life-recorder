@@ -254,6 +254,10 @@ function Scores() {
       .sort((a, b) => b.win_rate - a.win_rate)
 
     const yearlyScoresList = Object.values(scoreStats)
+      .map(score => ({
+        ...score,
+        user_name: formatPlayerName(score.user_name)
+      }))
       .sort((a, b) => b.total_score - a.total_score)
 
     setWinRates(winRatesList)
@@ -298,7 +302,7 @@ function Scores() {
                 {yearlyScores.map((score, index) => (
                   <tr key={score.user_id}>
                     <td>{index + 1}</td>
-                    <td>{formatPlayerName(score.user_name)}</td>
+                    <td>{score.user_name}</td>
                     <td>{score.total_score}</td>
                   </tr>
                 ))}
@@ -328,7 +332,7 @@ function Scores() {
                 {winRates.map((rate, index) => (
                   <tr key={rate.user_id}>
                     <td>{index + 1}</td>
-                    <td>{formatPlayerName(rate.user_name)}</td>
+                    <td>{rate.user_name}</td>
                     <td>{rate.total_games}</td>
                     <td>{rate.wins}</td>
                     <td>{rate.win_rate.toFixed(2)}%</td>
@@ -360,7 +364,7 @@ function Scores() {
                 {teamWinRates.map((rate, index) => (
                   <tr key={`${rate.user1}-${rate.user2}`}>
                     <td>{index + 1}</td>
-                    <td>{formatPlayerName(rate.user1_name)} + {formatPlayerName(rate.user2_name)}</td>
+                    <td>{rate.user1_name} + {rate.user2_name}</td>
                     <td>{rate.total_games}</td>
                     <td>{rate.wins}</td>
                     <td>{rate.win_rate.toFixed(2)}%</td>
