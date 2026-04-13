@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { PlayerWinRateChart, TeamWinRateChart } from './Charts'
-import { cardGamesApi, profilesApi } from '../supabase'
+import { cardGamesApi, profilesApi, supabase } from '../supabase'
 
 function Scores() {
   const [yearlyScores, setYearlyScores] = useState([])
@@ -9,6 +9,7 @@ function Scores() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString())
   const [isLoading, setIsLoading] = useState(true)
   const [players, setPlayers] = useState([])
+  const [linkedPreUsers, setLinkedPreUsers] = useState([])
 
   useEffect(() => {
     loadPlayers()
@@ -16,6 +17,33 @@ function Scores() {
   }, [selectedYear])
 
   const formatPlayerName = (playerName) => {
+    // 首先检查是否是已关联的预注册用户
+    for (const preUser of linkedPreUsers) {
+      const preUserKeywords = new Set()
+      const preUserFormatted = preUser.nickname && preUser.name 
+        ? `${preUser.nickname}（${preUser.name}）`
+        : preUser.nickname || preUser.name
+      preUserKeywords.add(preUserFormatted)
+      preUserKeywords.add(preUser.nickname)
+      preUserKeywords.add(preUser.name)
+      preUserKeywords.add(`${preUserFormatted} (预注册)`)
+      if (preUser.nickname) preUserKeywords.add(`${preUser.nickname} (预注册)`)
+      if (preUser.name) preUserKeywords.add(`${preUser.name} (预注册)`)
+      
+      if (preUserKeywords.has(playerName)) {
+        const linkedUser = players.find(p => p.id === preUser.linked_user_id)
+        if (linkedUser) {
+          if (linkedUser?.nickname && linkedUser?.name) {
+            return `${linkedUser.nickname}（${linkedUser.name}）`
+          } else if (linkedUser?.nickname) {
+            return linkedUser.nickname
+          } else if (linkedUser?.name) {
+            return linkedUser.name
+          }
+        }
+      }
+    }
+    
     // 从 players 数组中找到对应的用户对象
     const player = players.find(p => 
       p.nickname === playerName || 
@@ -34,11 +62,49 @@ function Scores() {
     }
   };
 
+  const getMappedPlayerName = (playerName) => {
+    // 首先检查是否是已关联的预注册用户
+    for (const preUser of linkedPreUsers) {
+      const preUserKeywords = new Set()
+      const preUserFormatted = preUser.nickname && preUser.name 
+        ? `${preUser.nickname}（${preUser.name}）`
+        : preUser.nickname || preUser.name
+      preUserKeywords.add(preUserFormatted)
+      preUserKeywords.add(preUser.nickname)
+      preUserKeywords.add(preUser.name)
+      preUserKeywords.add(`${preUserFormatted} (预注册)`)
+      if (preUser.nickname) preUserKeywords.add(`${preUser.nickname} (预注册)`)
+      if (preUser.name) preUserKeywords.add(`${preUser.name} (预注册)`)
+      
+      if (preUserKeywords.has(playerName)) {
+        const linkedUser = players.find(p => p.id === preUser.linked_user_id)
+        if (linkedUser) {
+          if (linkedUser?.nickname && linkedUser?.name) {
+            return `${linkedUser.nickname}（${linkedUser.name}）`
+          } else if (linkedUser?.nickname) {
+            return linkedUser.nickname
+          } else if (linkedUser?.name) {
+            return linkedUser.name
+          }
+        }
+      }
+    }
+    return playerName
+  };
+
   const loadPlayers = async () => {
     try {
-      const { data, error } = await profilesApi.getAll()
-      if (!error && data) {
-        setPlayers(data)
+      const [profilesResult, preRegisteredResult] = await Promise.all([
+        profilesApi.getAll(),
+        supabase.from('pre_registered_users').select('*')
+      ])
+      
+      if (!profilesResult.error && profilesResult.data) {
+        setPlayers(profilesResult.data)
+      }
+      
+      if (!preRegisteredResult.error && preRegisteredResult.data) {
+        setLinkedPreUsers(preRegisteredResult.data.filter(u => u.is_linked))
       }
     } catch (e) {
       console.error('加载用户失败:', e)
@@ -70,9 +136,14 @@ function Scores() {
     })
 
     filteredGames.forEach(game => {
-      const team1Players = Array.isArray(game.team1) ? game.team1 : game.team1.split(', ')
-      const team2Players = Array.isArray(game.team2) ? game.team2 : game.team2.split(', ')
-      const winner = game.winner ? game.winner.split(', ') : []
+      let team1Players = Array.isArray(game.team1) ? game.team1 : game.team1.split(', ')
+      let team2Players = Array.isArray(game.team2) ? game.team2 : game.team2.split(', ')
+      let winner = game.winner ? game.winner.split(', ') : []
+      
+      // 替换旧用户名为新用户名
+      team1Players = team1Players.map(p => getMappedPlayerName(p))
+      team2Players = team2Players.map(p => getMappedPlayerName(p))
+      winner = winner.map(p => getMappedPlayerName(p))
 
       // 判断哪队赢了
       const team1Won = winner.length > 0 && team1Players.every(p => winner.includes(p))
