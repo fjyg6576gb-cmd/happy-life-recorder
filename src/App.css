@@ -2122,3 +2122,116 @@ body::before {
   border-radius: 10px;
   border: 1px solid var(--border-glow);
 }
+
+/* 趣味数据卡片样式 */
+.fun-stats-section {
+  background: var(--dark-surface);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-glow);
+  margin-bottom: 1.5rem;
+}
+
+.fun-stats-section h3 {
+  margin-bottom: 1.25rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--soft-cyan);
+  text-shadow: 0 0 10px rgba(78, 205, 196, 0.3);
+  text-align: center;
+}
+
+.fun-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.fun-stat-card {
+  background: var(--dark-card);
+  border: 1px solid var(--border-glow);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.fun-stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--soft-cyan), var(--soft-purple), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.fun-stat-card:hover::after {
+  opacity: 1;
+}
+
+.fun-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px var(--shadow-glow);
+  border-color: var(--soft-cyan);
+}
+
+.fun-stat-icon {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 10px rgba(78, 205, 196, 0.3));
+}
+
+.fun-stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.fun-stat-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.35rem;
+}
+
+.fun-stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--soft-cyan);
+  margin-bottom: 0.25rem;
+  text-shadow: 0 0 10px rgba(78, 205, 196, 0.2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fun-stat-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* 趣味数据卡片移动端优化 */
+@media (max-width: 768px) {
+  .fun-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fun-stat-card {
+    padding: 1.25rem;
+  }
+
+  .fun-stat-icon {
+    font-size: 2rem;
+  }
+
+  .fun-stat-value {
+    font-size: 1.1rem;
+  }
+}
