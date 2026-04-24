@@ -21,13 +21,6 @@ function Auth() {
     setErrorMessage('')
     
     try {
-      // 先检查网络连接
-      try {
-        await fetch('https://iwsfyqzpneipwptnfekg.supabase.co', { mode: 'no-cors' })
-      } catch (networkErr) {
-        console.warn('网络连接检测失败，但继续尝试登录')
-      }
-      
       if (isRegistering) {
         const { data, error } = await supabase.auth.signUp({
           email: email,
@@ -146,15 +139,18 @@ function Auth() {
       )}
       
       <div style={{
-        backgroundColor: '#e7f3ff',
-        border: '1px solid #2196F3',
+        backgroundColor: '#fff3e0',
+        border: '1px solid #ff9800',
         borderRadius: '8px',
         padding: '12px',
         marginBottom: '16px',
-        color: '#1976d2',
+        color: '#e65100',
         fontSize: '14px'
       }}>
-        💡 提示：如果 GitHub Pages 登录不稳定，建议使用本地开发模式运行
+        ⚠️ 注意：数据库服务器在海外，中国大陆访问可能不稳定。<br/>
+        如果一直连接失败，请：<br/>
+        1. 检查 Supabase 项目是否正常运行<br/>
+        2. 或使用 VPN 访问
       </div>
       
       {isRegistering && (
