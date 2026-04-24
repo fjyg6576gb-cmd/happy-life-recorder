@@ -7,6 +7,7 @@ function Auth() {
   const [name, setName] = useState('')
   const [isRegistering, setIsRegistering] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   console.log('Auth 组件渲染了！')
 
@@ -17,8 +18,16 @@ function Auth() {
     console.log('password:', password)
     console.log('name:', name)
     setLoading(true)
+    setErrorMessage('')
     
     try {
+      // 先检查网络连接
+      try {
+        await fetch('https://iwsfyqzpneipwptnfekg.supabase.co', { mode: 'no-cors' })
+      } catch (networkErr) {
+        console.warn('网络连接检测失败，但继续尝试登录')
+      }
+      
       if (isRegistering) {
         const { data, error } = await supabase.auth.signUp({
           email: email,
@@ -31,7 +40,7 @@ function Auth() {
         })
         
         if (error) {
-          alert('注册失败: ' + error.message)
+          throw error
         } else {
           if (data.user) {
             let profileCreated = false
@@ -93,11 +102,26 @@ function Auth() {
         })
         
         if (error) {
-          alert('登录失败: ' + error.message)
+          throw error
         }
       }
     } catch (err) {
-      alert('发生错误: ' + err.message)
+      console.error('登录/注册错误:', err)
+      
+      let message = err.message || '发生错误'
+      
+      // 处理网络错误
+      if (message.includes('fetch') || message.includes('Failed') || message.includes('Network')) {
+        message = '网络连接失败！\n\n建议：\n1. 检查网络连接\n2. 或使用本地开发模式（更稳定）'
+        setErrorMessage(message)
+      } else if (message.includes('Invalid')) {
+        message = '邮箱或密码错误，请重试'
+        setErrorMessage(message)
+      } else {
+        setErrorMessage(message)
+      }
+      
+      alert(message)
     } finally {
       setLoading(false)
     }
@@ -106,6 +130,32 @@ function Auth() {
   return (
     <div style={{ padding: '40px', maxWidth: '400px', margin: '0 auto' }}>
       <h1 style={{ textAlign: 'center' }}>{isRegistering ? '注册' : '登录'}</h1>
+      
+      {errorMessage && (
+        <div style={{
+          backgroundColor: '#fff3cd',
+          border: '1px solid #ffc107',
+          borderRadius: '8px',
+          padding: '12px',
+          marginBottom: '16px',
+          color: '#856404',
+          whiteSpace: 'pre-line'
+        }}>
+          ⚠️ {errorMessage}
+        </div>
+      )}
+      
+      <div style={{
+        backgroundColor: '#e7f3ff',
+        border: '1px solid #2196F3',
+        borderRadius: '8px',
+        padding: '12px',
+        marginBottom: '16px',
+        color: '#1976d2',
+        fontSize: '14px'
+      }}>
+        💡 提示：如果 GitHub Pages 登录不稳定，建议使用本地开发模式运行
+      </div>
       
       {isRegistering && (
         <div style={{ marginBottom: '16px' }}>
@@ -165,6 +215,7 @@ function Auth() {
           onClick={() => {
             console.log('切换模式')
             setIsRegistering(!isRegistering)
+            setErrorMessage('')
           }}
           style={{
             marginLeft: '8px',
