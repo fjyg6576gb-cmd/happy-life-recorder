@@ -11,6 +11,7 @@ function Scores() {
   const [isLoading, setIsLoading] = useState(true)
   const [players, setPlayers] = useState([])
   const [linkedPreUsers, setLinkedPreUsers] = useState([])
+  const [selectedPlayer, setSelectedPlayer] = useState(null)
 
   useEffect(() => {
     loadPlayers()
@@ -138,6 +139,13 @@ function Scores() {
     const yearTeamStats = {}
     const scoreCounts = {}
     const playerGameHistory = {}
+    
+    // 新增统计数据结构
+    const headToHeadStats = {}       // 个人对战统计
+    const teamVsTeamStats = {}       // 组合对战统计
+    const partnershipStats = {}      // 搭档统计（猪队友/幸运星）
+    const scoreDiffRecords = []      // 比分差记录
+    const playerWinRateTrend = {}    // 玩家胜率趋势（黑马选手）
 
     // 筛选该年份的记录
     const filteredGames = games.filter(game => {
@@ -286,7 +294,184 @@ function Scores() {
         const isWin = winner.includes(player)
         playerGameHistory[player].push(isWin)
       })
+
+      // 计算比分差
+      if (game.scores?.team1 && game.scores?.team2) {
+        const score1 = game.scores.team1
+        const score2 = game.scores.team2
+        const diff = Math.abs(score1 - score2)
+        scoreDiffRecords.push({
+          diff,
+          score1,
+          score2,
+          date: game.date,
+          team1Players,
+          team2Players
+        })
+      }
+
+      // 个人对战统计（头对头）
+      team1Players.forEach(player1 => {
+        team2Players.forEach(player2 => {
+          const key1 = `${player1}-${player2}`
+          const key2 = `${player2}-${player1}`
+          
+          if (!headToHeadStats[key1]) {
+            headToHeadStats[key1] = { player1, player2, total: 0, wins1: 0, wins2: 0 }
+          }
+          headToHeadStats[key1].total++
+          
+          if (team1Won && winner.includes(player1)) {
+            headToHeadStats[key1].wins1++
+          } else if (team2Won && winner.includes(player2)) {
+            headToHeadStats[key1].wins2++
+          }
+        })
+      })
+
+      // 组合对战统计
+      const teamKey1 = team1Players.sort().join('+')
+      const teamKey2 = team2Players.sort().join('+')
+      const vsKey = `${teamKey1}-${teamKey2}`
+      const vsKeyReverse = `${teamKey2}-${teamKey1}`
+      
+      let vsStatKey = vsKey
+      if (!teamVsTeamStats[vsKey] && teamVsTeamStats[vsKeyReverse]) {
+        vsStatKey = vsKeyReverse
+      }
+      
+      if (!teamVsTeamStats[vsStatKey]) {
+        teamVsTeamStats[vsStatKey] = {
+          team1: team1Players,
+          team2: team2Players,
+          total: 0,
+          team1Wins: 0,
+          team2Wins: 0
+        }
+      }
+      teamVsTeamStats[vsStatKey].total++
+      
+      if (team1Won) {
+        if (vsStatKey === vsKey) {
+          teamVsTeamStats[vsStatKey].team1Wins++
+        } else {
+          teamVsTeamStats[vsStatKey].team2Wins++
+        }
+      } else if (team2Won) {
+        if (vsStatKey === vsKey) {
+          teamVsTeamStats[vsStatKey].team2Wins++
+        } else {
+          teamVsTeamStats[vsStatKey].team1Wins++
+        }
+      }
+
+      // 搭档统计（猪队友/幸运星）
+      // 记录每个玩家和其他玩家搭档时的胜率
+      team1Players.forEach((player, i) => {
+        team1Players.slice(i + 1).forEach(partner => {
+          const key = [player, partner].sort().join('+')
+          if (!partnershipStats[key]) {
+            partnershipStats[key] = {
+              players: [player, partner],
+              total: 0,
+              wins: 0
+            }
+          }
+          partnershipStats[key].total++
+          if (team1Won) {
+            partnershipStats[key].wins++
+          }
+        })
+      })
+      
+      team2Players.forEach((player, i) => {
+        team2Players.slice(i + 1).forEach(partner => {
+          const key = [player, partner].sort().join('+')
+          if (!partnershipStats[key]) {
+            partnershipStats[key] = {
+              players: [player, partner],
+              total: 0,
+              wins: 0
+            }
+          }
+          partnershipStats[key].total++
+          if (team2Won) {
+            partnershipStats[key].wins++
+          }
+        })
+      })
     })
+
+    // 计算黑马选手（胜率提升最快）
+    // 将比赛分成前后两半，比较胜率变化
+    if (filteredGames.length > 3) {
+      const midPoint = Math.floor(filteredGames.length / 2)
+      const firstHalf = filteredGames.slice(0, midPoint)
+      const secondHalf = filteredGames.slice(midPoint)
+      
+      const firstHalfStats = {}
+      const secondHalfStats = {}
+      
+      firstHalf.forEach(game => {
+        let team1Players = Array.isArray(game.team1) ? game.team1 : game.team1.split(', ')
+        let team2Players = Array.isArray(game.team2) ? game.team2 : game.team2.split(', ')
+        let winner = game.winner ? game.winner.split(', ') : []
+        
+        team1Players = team1Players.map(p => getMappedPlayerName(p))
+        team2Players = team2Players.map(p => getMappedPlayerName(p))
+        winner = winner.map(p => getMappedPlayerName(p))
+        
+        team1Players.concat(team2Players).forEach(player => {
+          if (!firstHalfStats[player]) {
+            firstHalfStats[player] = { total: 0, wins: 0 }
+          }
+          firstHalfStats[player].total++
+          if (winner.includes(player)) {
+            firstHalfStats[player].wins++
+          }
+        })
+      })
+      
+      secondHalf.forEach(game => {
+        let team1Players = Array.isArray(game.team1) ? game.team1 : game.team1.split(', ')
+        let team2Players = Array.isArray(game.team2) ? game.team2 : game.team2.split(', ')
+        let winner = game.winner ? game.winner.split(', ') : []
+        
+        team1Players = team1Players.map(p => getMappedPlayerName(p))
+        team2Players = team2Players.map(p => getMappedPlayerName(p))
+        winner = winner.map(p => getMappedPlayerName(p))
+        
+        team1Players.concat(team2Players).forEach(player => {
+          if (!secondHalfStats[player]) {
+            secondHalfStats[player] = { total: 0, wins: 0 }
+          }
+          secondHalfStats[player].total++
+          if (winner.includes(player)) {
+            secondHalfStats[player].wins++
+          }
+        })
+      })
+      
+      // 计算每个玩家的胜率变化
+      Object.keys(yearPlayerStats).forEach(player => {
+        const firstStats = firstHalfStats[player]
+        const secondStats = secondHalfStats[player]
+        
+        if (firstStats && secondStats && firstStats.total >= 2 && secondStats.total >= 2) {
+          const firstRate = firstStats.wins / firstStats.total
+          const secondRate = secondStats.wins / secondStats.total
+          const improvement = secondRate - firstRate
+          
+          playerWinRateTrend[player] = {
+            improvement,
+            firstRate,
+            secondRate,
+            firstTotal: firstStats.total,
+            secondTotal: secondStats.total
+          }
+        }
+      })
+    }
 
     // 计算趣味数据
     const newFunStats = {
@@ -317,7 +502,36 @@ function Scores() {
       
       // 最长连胜和连败
       longestWinStreak: null,
-      longestLoseStreak: null
+      longestLoseStreak: null,
+      
+      // 新增趣味头衔
+      blackHorse: Object.entries(playerWinRateTrend)
+        .sort((a, b) => b[1].improvement - a[1].improvement)[0],
+      
+      // 最大分差记录
+      biggestScoreDiff: scoreDiffRecords
+        .sort((a, b) => b.diff - a.diff)[0],
+      
+      // 对手克星分析：个人对战胜率最高
+      bestHeadToHead: Object.entries(headToHeadStats)
+        .filter(([_, stat]) => stat.total >= 2)
+        .sort((a, b) => {
+          const rateA = Math.max(a[1].wins1, a[1].wins2) / a[1].total
+          const rateB = Math.max(b[1].wins1, b[1].wins2) / b[1].total
+          return rateB - rateA
+        })[0],
+      
+      // 组合对战胜率最高
+      bestTeamVsTeam: Object.entries(teamVsTeamStats)
+        .filter(([_, stat]) => stat.total >= 2)
+        .sort((a, b) => {
+          const rateA = Math.max(a[1].team1Wins, a[1].team2Wins) / a[1].total
+          const rateB = Math.max(b[1].team1Wins, b[1].team2Wins) / b[1].total
+          return rateB - rateA
+        })[0],
+      
+      // 搭档统计数据（用于猪队友/幸运星）
+      partnershipStats: partnershipStats
     }
 
     // 计算每个玩家的最长连胜和连败
@@ -496,7 +710,252 @@ function Scores() {
                 </div>
               </div>
             )}
+            
+            {/* 黑马选手 */}
+            {funStats.blackHorse && (
+              <div className="fun-stat-card">
+                <div className="fun-stat-icon">🏇</div>
+                <div className="fun-stat-content">
+                  <div className="fun-stat-title">黑马选手</div>
+                  <div className="fun-stat-value">{formatPlayerName(funStats.blackHorse[0])}</div>
+                  <div className="fun-stat-desc">胜率提升 {((funStats.blackHorse[1].improvement) * 100).toFixed(1)}%</div>
+                </div>
+              </div>
+            )}
+            
+            {/* 最大分差 */}
+            {funStats.biggestScoreDiff && (
+              <div className="fun-stat-card">
+                <div className="fun-stat-icon">💥</div>
+                <div className="fun-stat-content">
+                  <div className="fun-stat-title">最大分差</div>
+                  <div className="fun-stat-value">{funStats.biggestScoreDiff.score1} : {funStats.biggestScoreDiff.score2}</div>
+                  <div className="fun-stat-desc">差 {funStats.biggestScoreDiff.diff} 分</div>
+                </div>
+              </div>
+            )}
           </div>
+        </div>
+      )}
+      
+      {/* 趣味头衔 🏆 */}
+      {funStats.totalGames > 0 && (
+        <div className="fun-stats-section">
+          <h3>趣味头衔 🏆</h3>
+          <div className="fun-stats-grid">
+            {/* 黑马选手 */}
+            {funStats.blackHorse && (
+              <div className="fun-stat-card">
+                <div className="fun-stat-icon">🏇</div>
+                <div className="fun-stat-content">
+                  <div className="fun-stat-title">黑马选手</div>
+                  <div className="fun-stat-value">{formatPlayerName(funStats.blackHorse[0])}</div>
+                  <div className="fun-stat-desc">
+                    胜率从 {((funStats.blackHorse[1].firstRate) * 100).toFixed(1)}% 提升至 {((funStats.blackHorse[1].secondRate) * 100).toFixed(1)}%
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* 对手克星分析 ⚡ */}
+      {funStats.totalGames > 0 && (
+        <div className="fun-stats-section">
+          <h3>对手克星分析 ⚡</h3>
+          <div className="fun-stats-grid">
+            {/* 个人对战胜率最高 */}
+            {funStats.bestHeadToHead && (
+              <div className="fun-stat-card">
+                <div className="fun-stat-icon">⚔️</div>
+                <div className="fun-stat-content">
+                  <div className="fun-stat-title">个人克星</div>
+                  <div className="fun-stat-value">
+                    {(() => {
+                      const stat = funStats.bestHeadToHead[1]
+                      const isPlayer1Winner = stat.wins1 > stat.wins2
+                      const winner = isPlayer1Winner ? stat.player1 : stat.player2
+                      const loser = isPlayer1Winner ? stat.player2 : stat.player1
+                      const winCount = isPlayer1Winner ? stat.wins1 : stat.wins2
+                      const winRate = (winCount / stat.total * 100).toFixed(1)
+                      return `${formatPlayerName(winner)} 克制 ${formatPlayerName(loser)}`
+                    })()}
+                  </div>
+                  <div className="fun-stat-desc">
+                    {(() => {
+                      const stat = funStats.bestHeadToHead[1]
+                      const isPlayer1Winner = stat.wins1 > stat.wins2
+                      const winCount = isPlayer1Winner ? stat.wins1 : stat.wins2
+                      const winRate = (winCount / stat.total * 100).toFixed(1)
+                      return `战绩 ${winCount}胜 ${stat.total - winCount}负 胜率 ${winRate}%`
+                    })()}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* 组合对战胜率最高 */}
+            {funStats.bestTeamVsTeam && (
+              <div className="fun-stat-card">
+                <div className="fun-stat-icon">🤺</div>
+                <div className="fun-stat-content">
+                  <div className="fun-stat-title">组合克星</div>
+                  <div className="fun-stat-value">
+                    {(() => {
+                      const stat = funStats.bestTeamVsTeam[1]
+                      const isTeam1Winner = stat.team1Wins > stat.team2Wins
+                      const winnerTeam = isTeam1Winner ? stat.team1 : stat.team2
+                      const loserTeam = isTeam1Winner ? stat.team2 : stat.team1
+                      return `${winnerTeam.map(p => formatPlayerName(p)).join('+')} 克制 ${loserTeam.map(p => formatPlayerName(p)).join('+')}`
+                    })()}
+                  </div>
+                  <div className="fun-stat-desc">
+                    {(() => {
+                      const stat = funStats.bestTeamVsTeam[1]
+                      const isTeam1Winner = stat.team1Wins > stat.team2Wins
+                      const winCount = isTeam1Winner ? stat.team1Wins : stat.team2Wins
+                      const winRate = (winCount / stat.total * 100).toFixed(1)
+                      return `战绩 ${winCount}胜 ${stat.total - winCount}负 胜率 ${winRate}%`
+                    })()}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* 比分统计 📊 */}
+      {funStats.totalGames > 0 && (
+        <div className="fun-stats-section">
+          <h3>比分统计 📊</h3>
+          <div className="fun-stats-grid">
+            {/* 最常见比分 */}
+            {funStats.mostCommonScore && (
+              <div className="fun-stat-card">
+                <div className="fun-stat-icon">📈</div>
+                <div className="fun-stat-content">
+                  <div className="fun-stat-title">最常见比分</div>
+                  <div className="fun-stat-value">{funStats.mostCommonScore[0]}</div>
+                  <div className="fun-stat-desc">出现 {funStats.mostCommonScore[1]} 次</div>
+                </div>
+              </div>
+            )}
+            
+            {/* 最大分差 */}
+            {funStats.biggestScoreDiff && (
+              <div className="fun-stat-card">
+                <div className="fun-stat-icon">💥</div>
+                <div className="fun-stat-content">
+                  <div className="fun-stat-title">最大分差</div>
+                  <div className="fun-stat-value">{funStats.biggestScoreDiff.score1} : {funStats.biggestScoreDiff.score2}</div>
+                  <div className="fun-stat-desc">差 {funStats.biggestScoreDiff.diff} 分</div>
+                </div>
+              </div>
+            )}
+            
+            {/* 最长连胜 */}
+            {funStats.longestWinStreak && funStats.longestWinStreak.streak > 0 && (
+              <div className="fun-stat-card">
+                <div className="fun-stat-icon">🔥</div>
+                <div className="fun-stat-content">
+                  <div className="fun-stat-title">最长连胜</div>
+                  <div className="fun-stat-value">{formatPlayerName(funStats.longestWinStreak.player)}</div>
+                  <div className="fun-stat-desc">连胜 {funStats.longestWinStreak.streak} 场</div>
+                </div>
+              </div>
+            )}
+            
+            {/* 最长连败 */}
+            {funStats.longestLoseStreak && funStats.longestLoseStreak.streak > 0 && (
+              <div className="fun-stat-card">
+                <div className="fun-stat-icon">😅</div>
+                <div className="fun-stat-content">
+                  <div className="fun-stat-title">最长连败</div>
+                  <div className="fun-stat-value">{formatPlayerName(funStats.longestLoseStreak.player)}</div>
+                  <div className="fun-stat-desc">连败 {funStats.longestLoseStreak.streak} 场</div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* 趣味数据 😄 - 猪队友/幸运星 */}
+      {funStats.totalGames > 0 && funStats.partnershipStats && (
+        <div className="fun-stats-section">
+          <h3>趣味数据 😄</h3>
+          
+          {/* 玩家选择器 */}
+          <div className="player-selector" style={{ marginBottom: '15px' }}>
+            <label>选择玩家查看其搭档分析：</label>
+            <select 
+              value={selectedPlayer || ''} 
+              onChange={(e) => setSelectedPlayer(e.target.value || null)}
+              style={{ marginLeft: '10px', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-glow)', background: 'var(--dark-card)', color: 'var(--text-primary)' }}
+            >
+              <option value="">-- 选择玩家 --</option>
+              {Object.keys(yearPlayerStats).map(player => (
+                <option key={player} value={player}>{formatPlayerName(player)}</option>
+              ))}
+            </select>
+          </div>
+          
+          {/* 猪队友/幸运星显示 */}
+          {selectedPlayer && (
+            <div className="fun-stats-grid">
+              {(() => {
+                // 找出该玩家的所有搭档组合
+                const playerPartnerships = Object.entries(funStats.partnershipStats)
+                  .filter(([_, stat]) => stat.players.includes(selectedPlayer))
+                  .map(([key, stat]) => {
+                    const partner = stat.players.find(p => p !== selectedPlayer)
+                    const winRate = stat.total > 0 ? (stat.wins / stat.total) * 100 : 0
+                    return { partner, stat, winRate }
+                  })
+                  .filter(p => p.partner && p.stat.total >= 2)
+                  .sort((a, b) => b.winRate - a.winRate)
+                
+                if (playerPartnerships.length === 0) return null
+                
+                const luckyStar = playerPartnerships[0]
+                const badPartner = playerPartnerships[playerPartnerships.length - 1]
+                
+                return (
+                  <>
+                    {/* 幸运星 */}
+                    <div className="fun-stat-card">
+                      <div className="fun-stat-icon">⭐</div>
+                      <div className="fun-stat-content">
+                        <div className="fun-stat-title">幸运星</div>
+                        <div className="fun-stat-value">{formatPlayerName(luckyStar.partner)}</div>
+                        <div className="fun-stat-desc">
+                          一起搭档胜率 {luckyStar.winRate.toFixed(1)}%
+                          （{luckyStar.stat.wins}胜{luckyStar.stat.total - luckyStar.stat.wins}负）
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* 猪队友 */}
+                    {badPartner.partner !== luckyStar.partner && (
+                      <div className="fun-stat-card">
+                        <div className="fun-stat-icon">🐷</div>
+                        <div className="fun-stat-content">
+                          <div className="fun-stat-title">猪队友</div>
+                          <div className="fun-stat-value">{formatPlayerName(badPartner.partner)}</div>
+                          <div className="fun-stat-desc">
+                            一起搭档胜率 {badPartner.winRate.toFixed(1)}%
+                            （{badPartner.stat.wins}胜{badPartner.stat.total - badPartner.stat.wins}负）
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
+            </div>
+          )}
         </div>
       )}
 
