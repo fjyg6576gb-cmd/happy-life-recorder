@@ -9,6 +9,7 @@ function Scores() {
   const [funStats, setFunStats] = useState({})
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString())
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingFunStats, setIsLoadingFunStats] = useState(false)
   const [players, setPlayers] = useState([])
   const [linkedPreUsers, setLinkedPreUsers] = useState([])
   const [selectedPlayer, setSelectedPlayer] = useState(null)
@@ -124,7 +125,14 @@ function Scores() {
     try {
       const { data, error } = await cardGamesApi.getAll()
       if (!error && data) {
-        calculateStats(data)
+        // 先计算积分排名和胜率排名，快速显示主内容
+        calculateBasicStats(data)
+        // 再后台计算趣味数据
+        setIsLoadingFunStats(true)
+        setTimeout(() => {
+          calculateFunStats(data)
+          setIsLoadingFunStats(false)
+        }, 100)
       }
     } catch (e) {
       console.error('加载打牌记录失败:', e)
@@ -132,7 +140,183 @@ function Scores() {
     setIsLoading(false)
   }
 
-  const calculateStats = (games) => {
+  const calculateBasicStats = (games) => {
+    const playerStats = {}
+    const teamStats = {}
+    const scoreStats = {}
+    const yearPlayerStatsLocal = {}
+    const yearTeamStats = {}
+
+    // 筛选该年份的记录
+    const filteredGames = games.filter(game => {
+      const gameYear = new Date(game.date).getFullYear().toString()
+      return gameYear === selectedYear
+    }).sort((a, b) => new Date(a.date) - new Date(b.date))
+
+    // 胜率统计（所有年份）
+    games.forEach(game => {
+      let team1Players = Array.isArray(game.team1) ? game.team1 : game.team1.split(', ')
+      let team2Players = Array.isArray(game.team2) ? game.team2 : game.team2.split(', ')
+      let winner = game.winner ? game.winner.split(', ') : []
+      
+      team1Players = team1Players.map(p => getMappedPlayerName(p))
+      team2Players = team2Players.map(p => getMappedPlayerName(p))
+      winner = winner.map(p => getMappedPlayerName(p))
+
+      team1Players.forEach(player => {
+        if (!playerStats[player]) {
+          playerStats[player] = { total_games: 0, wins: 0 }
+        }
+        playerStats[player].total_games++
+        if (winner.includes(player)) {
+          playerStats[player].wins++
+        }
+      })
+
+      team2Players.forEach(player => {
+        if (!playerStats[player]) {
+          playerStats[player] = { total_games: 0, wins: 0 }
+        }
+        playerStats[player].total_games++
+        if (winner.includes(player)) {
+          playerStats[player].wins++
+        }
+      })
+
+      const teamKey1 = team1Players.sort().join('+')
+      const teamKey2 = team2Players.sort().join('+')
+      
+      if (!teamStats[teamKey1]) {
+        teamStats[teamKey1] = { total_games: 0, wins: 0, players: team1Players }
+      }
+      teamStats[teamKey1].total_games++
+      if (winner.length > 0 && team1Players.every(p => winner.includes(p))) {
+        teamStats[teamKey1].wins++
+      }
+
+      if (!teamStats[teamKey2]) {
+        teamStats[teamKey2] = { total_games: 0, wins: 0, players: team2Players }
+      }
+      teamStats[teamKey2].total_games++
+      if (winner.length > 0 && team2Players.every(p => winner.includes(p))) {
+        teamStats[teamKey2].wins++
+      }
+    })
+
+    // 积分计算（该年份）
+    filteredGames.forEach(game => {
+      let team1Players = Array.isArray(game.team1) ? game.team1 : game.team1.split(', ')
+      let team2Players = Array.isArray(game.team2) ? game.team2 : game.team2.split(', ')
+      let winner = game.winner ? game.winner.split(', ') : []
+      
+      team1Players = team1Players.map(p => getMappedPlayerName(p))
+      team2Players = team2Players.map(p => getMappedPlayerName(p))
+      winner = winner.map(p => getMappedPlayerName(p))
+
+      const team1Won = winner.length > 0 && team1Players.every(p => winner.includes(p))
+      const team2Won = winner.length > 0 && team2Players.every(p => winner.includes(p))
+
+      team1Players.forEach(player => {
+        if (!scoreStats[player]) {
+          scoreStats[player] = { user_id: player, user_name: player, total_score: 0 }
+        }
+        if (team1Won) {
+          scoreStats[player].total_score += 2
+        } else {
+          scoreStats[player].total_score -= 1
+        }
+      })
+
+      team2Players.forEach(player => {
+        if (!scoreStats[player]) {
+          scoreStats[player] = { user_id: player, user_name: player, total_score: 0 }
+        }
+        if (team2Won) {
+          scoreStats[player].total_score += 2
+        } else {
+          scoreStats[player].total_score -= 1
+        }
+      })
+
+      // 该年份的玩家统计
+      team1Players.forEach(player => {
+        if (!yearPlayerStatsLocal[player]) {
+          yearPlayerStatsLocal[player] = { total_games: 0, wins: 0 }
+        }
+        yearPlayerStatsLocal[player].total_games++
+        if (winner.includes(player)) {
+          yearPlayerStatsLocal[player].wins++
+        }
+      })
+
+      team2Players.forEach(player => {
+        if (!yearPlayerStatsLocal[player]) {
+          yearPlayerStatsLocal[player] = { total_games: 0, wins: 0 }
+        }
+        yearPlayerStatsLocal[player].total_games++
+        if (winner.includes(player)) {
+          yearPlayerStatsLocal[player].wins++
+        }
+      })
+
+      // 该年份的组合统计
+      const yearTeamKey1 = team1Players.sort().join('+')
+      const yearTeamKey2 = team2Players.sort().join('+')
+      
+      if (!yearTeamStats[yearTeamKey1]) {
+        yearTeamStats[yearTeamKey1] = { total_games: 0, wins: 0, players: team1Players }
+      }
+      yearTeamStats[yearTeamKey1].total_games++
+      if (team1Won) {
+        yearTeamStats[yearTeamKey1].wins++
+      }
+
+      if (!yearTeamStats[yearTeamKey2]) {
+        yearTeamStats[yearTeamKey2] = { total_games: 0, wins: 0, players: team2Players }
+      }
+      yearTeamStats[yearTeamKey2].total_games++
+      if (team2Won) {
+        yearTeamStats[yearTeamKey2].wins++
+      }
+    })
+
+    const winRatesList = Object.entries(playerStats)
+      .map(([player, stats]) => ({
+        user_id: player,
+        user_name: formatPlayerName(player),
+        total_games: stats.total_games,
+        wins: stats.wins,
+        win_rate: stats.total_games > 0 ? Math.round((stats.wins / stats.total_games) * 10000) / 100 : 0
+      }))
+      .sort((a, b) => b.win_rate - a.win_rate)
+
+    const teamWinRatesList = Object.entries(teamStats)
+      .map(([key, stats]) => ({
+        user1: stats.players[0],
+        user1_name: formatPlayerName(stats.players[0]),
+        user2: stats.players[1],
+        user2_name: formatPlayerName(stats.players[1]),
+        total_games: stats.total_games,
+        wins: stats.wins,
+        win_rate: stats.total_games > 0 ? Math.round((stats.wins / stats.total_games) * 10000) / 100 : 0
+      }))
+      .filter(stat => stat.total_games > 0)
+      .sort((a, b) => b.win_rate - a.win_rate)
+
+    const yearlyScoresList = Object.values(scoreStats)
+      .map(score => ({
+        ...score,
+        user_name: formatPlayerName(score.user_name)
+      }))
+      .sort((a, b) => b.total_score - a.total_score)
+
+    setWinRates(winRatesList)
+    setTeamWinRates(teamWinRatesList)
+    setYearlyScores(yearlyScoresList)
+    setYearPlayerStats(yearPlayerStatsLocal)
+  }
+
+  const calculateFunStats = (games) => {
     const playerStats = {}
     const teamStats = {}
     const scoreStats = {}
@@ -628,7 +812,14 @@ function Scores() {
       <h2>积分排名</h2>
 
       {/* 趣味数据卡片区域 */}
-      {funStats.totalGames > 0 && (
+      {isLoadingFunStats ? (
+        <div className="fun-stats-section">
+          <h3>趣味数据</h3>
+          <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)' }}>
+            趣味数据加载中...
+          </div>
+        </div>
+      ) : funStats.totalGames > 0 && (
         <div className="fun-stats-section">
           <h3>趣味数据</h3>
           <div className="fun-stats-grid">
@@ -761,7 +952,7 @@ function Scores() {
       )}
       
       {/* 趣味头衔 🏆 */}
-      {funStats.totalGames > 0 && (
+      {!isLoadingFunStats && funStats.totalGames > 0 && (
         <div className="fun-stats-section">
           <h3>趣味头衔 🏆</h3>
           <div className="fun-stats-grid">
@@ -783,7 +974,7 @@ function Scores() {
       )}
       
       {/* 对手克星分析 ⚡ */}
-      {funStats.totalGames > 0 && (
+      {!isLoadingFunStats && funStats.totalGames > 0 && (
         <div className="fun-stats-section">
           <h3>对手克星分析 ⚡</h3>
           <div className="fun-stats-grid">
@@ -849,7 +1040,7 @@ function Scores() {
       )}
       
       {/* 比分统计 📊 */}
-      {funStats.totalGames > 0 && (
+      {!isLoadingFunStats && funStats.totalGames > 0 && (
         <div className="fun-stats-section">
           <h3>比分统计 📊</h3>
           <div className="fun-stats-grid">
@@ -910,7 +1101,7 @@ function Scores() {
       )}
       
       {/* 趣味数据 😄 - 猪队友/幸运星 */}
-      {funStats.totalGames > 0 && funStats.partnershipStats && (
+      {!isLoadingFunStats && funStats.totalGames > 0 && funStats.partnershipStats && (
         <div className="fun-stats-section">
           <h3>趣味数据 😄</h3>
           
