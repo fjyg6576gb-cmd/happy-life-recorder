@@ -528,7 +528,7 @@ function Scores() {
       
       // 对手克星分析：个人对战胜率最高
       bestHeadToHead: Object.entries(headToHeadStats)
-        .filter(([_, stat]) => stat.total >= 2)
+        .filter(([_, stat]) => stat.total >= 1)
         .sort((a, b) => {
           const rateA = Math.max(a[1].wins1, a[1].wins2) / a[1].total
           const rateB = Math.max(b[1].wins1, b[1].wins2) / b[1].total
@@ -537,7 +537,7 @@ function Scores() {
       
       // 组合对战胜率最高
       bestTeamVsTeam: Object.entries(teamVsTeamStats)
-        .filter(([_, stat]) => stat.total >= 2)
+        .filter(([_, stat]) => stat.total >= 1)
         .sort((a, b) => {
           const rateA = Math.max(a[1].team1Wins, a[1].team2Wins) / a[1].total
           const rateB = Math.max(b[1].team1Wins, b[1].team2Wins) / b[1].total
