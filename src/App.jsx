@@ -215,7 +215,7 @@ function App() {
   }
 
   return (
-    <Router>
+    <Router basename="/happy-life-recorder/">
       <MainApp user={user} isAdmin={isAdmin} handleSignOut={handleSignOut} />
     </Router>
   )
