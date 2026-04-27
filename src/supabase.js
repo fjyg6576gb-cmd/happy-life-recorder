@@ -4,7 +4,18 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = 'https://iwsfyqzpneipwptnfekg.supabase.co'
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3c2Z5cXpwbmVpcHdwdG5mZWtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NDU2NDAsImV4cCI6MjA5MDAyMTY0MH0.-5z-jnXe-NNPfv-1-np3pwtHnkYZS8z8KZ-kQ4xXfKc'
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'happy-life-recorder'
+    }
+  }
+})
 
 // ==================== 吃饭记录相关 API ====================
 export const mealsApi = {
