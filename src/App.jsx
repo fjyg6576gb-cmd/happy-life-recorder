@@ -32,7 +32,7 @@ function App() {
           .eq('id', user.id)
           .single(),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('查询 profile 超时')), 5000)
+          setTimeout(() => reject(new Error('查询 profile 超时')), 15000)
         )
       ])
       
@@ -162,15 +162,15 @@ function App() {
     } else {
       try {
         const { data: profile } = await Promise.race([
-          supabase
-            .from('profiles')
-            .select('is_admin')
-            .eq('id', user.id)
-            .single(),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('请求超时')), 10000)
-          )
-        ])
+        supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', user.id)
+          .single(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('请求超时')), 15000)
+        )
+      ])
         console.log('从数据库获取的 is_admin 值:', profile?.is_admin)
         setIsAdmin(profile?.is_admin || false)
       } catch (e) {
