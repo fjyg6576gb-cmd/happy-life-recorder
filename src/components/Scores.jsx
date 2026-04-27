@@ -296,11 +296,28 @@ function Scores() {
         playerGameHistory[player].push(isWin)
       })
 
-      // 记录比分（不需要计算差值，因为比分是字符串格式）
+      // 计算比分差（给比分字符串赋值来计算）
       if (game.scores?.team1 && game.scores?.team2) {
+        // 比分数值映射
+        const getScoreValue = (score) => {
+          const scoreMap = {
+            '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10,
+            'J': 11, 'Q': 12, 'K': 13, 'A1': 14, 'A2': 15, 'A3': 16,
+            'WIN A1': 14, 'WIN A2': 15, 'WIN A3': 16
+          }
+          return scoreMap[score] || 0
+        }
+        
+        const score1 = game.scores.team1
+        const score2 = game.scores.team2
+        const score1Val = getScoreValue(score1)
+        const score2Val = getScoreValue(score2)
+        const diff = Math.abs(score1Val - score2Val)
+        
         scoreDiffRecords.push({
-          score1: game.scores.team1,
-          score2: game.scores.team2,
+          diff,
+          score1,
+          score2,
           date: game.date,
           team1Players,
           team2Players
@@ -505,9 +522,9 @@ function Scores() {
       blackHorse: Object.entries(playerWinRateTrend)
         .sort((a, b) => b[1].improvement - a[1].improvement)[0],
       
-      // 最近一次比分记录（因为比分是字符串，没有分差概念）
+      // 最大分差记录
       biggestScoreDiff: scoreDiffRecords
-        .sort((a, b) => new Date(b.date) - new Date(a.date))[0],
+        .sort((a, b) => b.diff - a.diff)[0],
       
       // 对手克星分析：个人对战胜率最高
       bestHeadToHead: Object.entries(headToHeadStats)
@@ -721,14 +738,14 @@ function Scores() {
               </div>
             )}
             
-            {/* 最近比分 */}
+            {/* 最大分差 */}
             {funStats.biggestScoreDiff && (
               <div className="fun-stat-card">
                 <div className="fun-stat-icon">💥</div>
                 <div className="fun-stat-content">
-                  <div className="fun-stat-title">最近比分</div>
+                  <div className="fun-stat-title">最大分差</div>
                   <div className="fun-stat-value">{funStats.biggestScoreDiff.score1} : {funStats.biggestScoreDiff.score2}</div>
-                  <div className="fun-stat-desc">{funStats.biggestScoreDiff.date}</div>
+                  <div className="fun-stat-desc">差 {funStats.biggestScoreDiff.diff} 分</div>
                 </div>
               </div>
             )}
@@ -841,14 +858,14 @@ function Scores() {
               </div>
             )}
             
-            {/* 最近比分 */}
+            {/* 最大分差 */}
             {funStats.biggestScoreDiff && (
               <div className="fun-stat-card">
                 <div className="fun-stat-icon">💥</div>
                 <div className="fun-stat-content">
-                  <div className="fun-stat-title">最近比分</div>
+                  <div className="fun-stat-title">最大分差</div>
                   <div className="fun-stat-value">{funStats.biggestScoreDiff.score1} : {funStats.biggestScoreDiff.score2}</div>
-                  <div className="fun-stat-desc">{funStats.biggestScoreDiff.date}</div>
+                  <div className="fun-stat-desc">差 {funStats.biggestScoreDiff.diff} 分</div>
                 </div>
               </div>
             )}
