@@ -146,16 +146,11 @@ function App() {
       setIsAdmin(true)
     } else {
       try {
-        const { data: profile } = await Promise.race([
-        supabase
+        const { data: profile } = await supabase
           .from('profiles')
           .select('is_admin')
           .eq('id', user.id)
-          .single(),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('请求超时')), 15000)
-        )
-      ])
+          .single()
         console.log('从数据库获取的 is_admin 值:', profile?.is_admin)
         setIsAdmin(profile?.is_admin || false)
       } catch (e) {
