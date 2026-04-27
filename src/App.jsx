@@ -25,16 +25,11 @@ function App() {
     try {
       const isAdminEmail = user.email === '22978@qq.com'
       
-      const { data: existingProfile, error: fetchError } = await Promise.race([
-        supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single(),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('查询 profile 超时')), 15000)
-        )
-      ])
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
       
       console.log('查询 profile 结果:', { existingProfile, fetchError })
       
@@ -52,14 +47,9 @@ function App() {
         console.log('准备插入的 profile 数据:', profileData)
         
         try {
-          const { error: insertError } = await Promise.race([
-            supabase
-              .from('profiles')
-              .insert([profileData]),
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('创建 profile 超时')), 5000)
-            )
-          ])
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert([profileData])
           
           if (insertError) {
             console.error('创建 profile 失败，错误详情:', insertError)
@@ -78,15 +68,10 @@ function App() {
         if (isAdminEmail && !existingProfile.is_admin) {
           console.log('检测到管理员邮箱但 is_admin 为 false，正在更新...')
           try {
-            const { error: updateError } = await Promise.race([
-              supabase
-                .from('profiles')
-                .update({ is_admin: true })
-                .eq('id', user.id),
-              new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('更新 is_admin 超时')), 5000)
-              )
-            ])
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update({ is_admin: true })
+              .eq('id', user.id)
             
             if (updateError) {
               console.error('更新 is_admin 失败:', updateError)

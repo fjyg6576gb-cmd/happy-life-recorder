@@ -313,11 +313,13 @@ function Scores() {
         const score1Val = getScoreValue(score1)
         const score2Val = getScoreValue(score2)
         const diff = Math.abs(score1Val - score2Val)
+        const isTeam1Win = score1Val > score2Val
         
         scoreDiffRecords.push({
           diff,
           score1,
           score2,
+          isTeam1Win,
           date: game.date,
           team1Players,
           team2Players
@@ -745,7 +747,12 @@ function Scores() {
                 <div className="fun-stat-content">
                   <div className="fun-stat-title">最大分差</div>
                   <div className="fun-stat-value">{funStats.biggestScoreDiff.score1} : {funStats.biggestScoreDiff.score2}</div>
-                  <div className="fun-stat-desc">差 {funStats.biggestScoreDiff.diff} 分</div>
+                  <div className="fun-stat-desc">
+                    {funStats.biggestScoreDiff.isTeam1Win 
+                      ? `${funStats.biggestScoreDiff.team1Players.map(p => formatPlayerName(p)).join('+')} 获胜，差 ${funStats.biggestScoreDiff.diff} 分`
+                      : `${funStats.biggestScoreDiff.team2Players.map(p => formatPlayerName(p)).join('+')} 获胜，差 ${funStats.biggestScoreDiff.diff} 分`
+                    }
+                  </div>
                 </div>
               </div>
             )}
@@ -865,7 +872,12 @@ function Scores() {
                 <div className="fun-stat-content">
                   <div className="fun-stat-title">最大分差</div>
                   <div className="fun-stat-value">{funStats.biggestScoreDiff.score1} : {funStats.biggestScoreDiff.score2}</div>
-                  <div className="fun-stat-desc">差 {funStats.biggestScoreDiff.diff} 分</div>
+                  <div className="fun-stat-desc">
+                    {funStats.biggestScoreDiff.isTeam1Win 
+                      ? `${funStats.biggestScoreDiff.team1Players.map(p => formatPlayerName(p)).join('+')} 获胜，差 ${funStats.biggestScoreDiff.diff} 分`
+                      : `${funStats.biggestScoreDiff.team2Players.map(p => formatPlayerName(p)).join('+')} 获胜，差 ${funStats.biggestScoreDiff.diff} 分`
+                    }
+                  </div>
                 </div>
               </div>
             )}
