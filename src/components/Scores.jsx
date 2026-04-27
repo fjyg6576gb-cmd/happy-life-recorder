@@ -941,7 +941,7 @@ function Scores() {
                     const winRate = stat.total > 0 ? (stat.wins / stat.total) * 100 : 0
                     return { partner, stat, winRate }
                   })
-                  .filter(p => p.partner && p.stat.total >= 2)
+                  .filter(p => p.partner && p.stat.total >= 1)
                   .sort((a, b) => b.winRate - a.winRate)
                 
                 if (playerPartnerships.length === 0) return null
