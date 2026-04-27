@@ -12,6 +12,7 @@ function Scores() {
   const [players, setPlayers] = useState([])
   const [linkedPreUsers, setLinkedPreUsers] = useState([])
   const [selectedPlayer, setSelectedPlayer] = useState(null)
+  const [yearPlayerStats, setYearPlayerStats] = useState({})
 
   useEffect(() => {
     loadPlayers()
@@ -135,7 +136,7 @@ function Scores() {
     const playerStats = {}
     const teamStats = {}
     const scoreStats = {}
-    const yearPlayerStats = {}
+    const yearPlayerStatsLocal = {}
     const yearTeamStats = {}
     const scoreCounts = {}
     const playerGameHistory = {}
@@ -243,22 +244,22 @@ function Scores() {
 
       // 该年份的玩家统计
       team1Players.forEach(player => {
-        if (!yearPlayerStats[player]) {
-          yearPlayerStats[player] = { total_games: 0, wins: 0 }
+        if (!yearPlayerStatsLocal[player]) {
+          yearPlayerStatsLocal[player] = { total_games: 0, wins: 0 }
         }
-        yearPlayerStats[player].total_games++
+        yearPlayerStatsLocal[player].total_games++
         if (winner.includes(player)) {
-          yearPlayerStats[player].wins++
+          yearPlayerStatsLocal[player].wins++
         }
       })
 
       team2Players.forEach(player => {
-        if (!yearPlayerStats[player]) {
-          yearPlayerStats[player] = { total_games: 0, wins: 0 }
+        if (!yearPlayerStatsLocal[player]) {
+          yearPlayerStatsLocal[player] = { total_games: 0, wins: 0 }
         }
-        yearPlayerStats[player].total_games++
+        yearPlayerStatsLocal[player].total_games++
         if (winner.includes(player)) {
-          yearPlayerStats[player].wins++
+          yearPlayerStatsLocal[player].wins++
         }
       })
 
@@ -453,7 +454,7 @@ function Scores() {
       })
       
       // 计算每个玩家的胜率变化
-      Object.keys(yearPlayerStats).forEach(player => {
+      Object.keys(yearPlayerStatsLocal).forEach(player => {
         const firstStats = firstHalfStats[player]
         const secondStats = secondHalfStats[player]
         
@@ -478,16 +479,16 @@ function Scores() {
       totalGames: filteredGames.length,
       
       // 劳模选手
-      hardestWorker: Object.entries(yearPlayerStats)
+      hardestWorker: Object.entries(yearPlayerStatsLocal)
         .sort((a, b) => b[1].total_games - a[1].total_games)[0],
       
       // 常胜将军
-      bestPlayer: Object.entries(yearPlayerStats)
+      bestPlayer: Object.entries(yearPlayerStatsLocal)
         .filter(([_, stats]) => stats.total_games >= 3)
         .sort((a, b) => (b[1].wins / b[1].total_games) - (a[1].wins / a[1].total_games))[0],
       
       // 屡败之士
-      worstPlayer: Object.entries(yearPlayerStats)
+      worstPlayer: Object.entries(yearPlayerStatsLocal)
         .filter(([_, stats]) => stats.total_games >= 3)
         .sort((a, b) => (a[1].wins / a[1].total_games) - (b[1].wins / b[1].total_games))[0],
       
@@ -600,6 +601,7 @@ function Scores() {
     setWinRates(winRatesList)
     setTeamWinRates(teamWinRatesList)
     setYearlyScores(yearlyScoresList)
+    setYearPlayerStats(yearPlayerStatsLocal)
   }
 
   if (isLoading) {
