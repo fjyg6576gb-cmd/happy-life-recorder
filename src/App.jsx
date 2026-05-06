@@ -89,27 +89,50 @@ function App() {
   }
 
   useEffect(() => {
+    let isMounted = true
+    
+    // 添加超时保护，确保最多10秒后停止加载
+    const timeoutId = setTimeout(() => {
+      if (isMounted) {
+        console.log('加载超时，强制结束loading状态')
+        setLoading(false)
+      }
+    }, 10000)
+
     const init = async () => {
       try {
         console.log('开始初始化...')
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await Promise.race([
+          supabase.auth.getUser(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('getUser超时')), 5000))
+        ])
         
         console.log('获取用户信息完成:', user?.email)
-        setUser(user)
+        if (isMounted) setUser(user)
         
         if (user) {
           console.log('用户已登录，开始检查 profile 和管理员状态')
           try {
-            await ensureProfileExists(user)
+            await Promise.race([
+              ensureProfileExists(user),
+              new Promise(resolve => setTimeout(resolve, 3000))
+            ])
           } catch (e) {
             console.error('检查 profile 时出错，但继续检查管理员:', e)
           }
-          await checkAdmin(user)
+          try {
+            await Promise.race([
+              checkAdmin(user),
+              new Promise(resolve => setTimeout(resolve, 3000))
+            ])
+          } catch (e) {
+            console.error('检查管理员时出错:', e)
+          }
         }
       } catch (e) {
         console.error('初始化出错:', e)
       }
-      setLoading(false)
+      if (isMounted) setLoading(false)
     }
     init()
 
@@ -118,24 +141,38 @@ function App() {
       async (event, session) => {
         console.log('Auth 状态变化:', event)
         const currentUser = session?.user ?? null
-        setUser(currentUser)
+        if (isMounted) setUser(currentUser)
         
         if (currentUser) {
           console.log('Auth 状态变化 - 用户:', currentUser?.email)
           try {
-            await ensureProfileExists(currentUser)
+            await Promise.race([
+              ensureProfileExists(currentUser),
+              new Promise(resolve => setTimeout(resolve, 3000))
+            ])
           } catch (e) {
             console.error('检查 profile 时出错，但继续检查管理员:', e)
           }
-          await checkAdmin(currentUser)
+          try {
+            await Promise.race([
+              checkAdmin(currentUser),
+              new Promise(resolve => setTimeout(resolve, 3000))
+            ])
+          } catch (e) {
+            console.error('检查管理员时出错:', e)
+          }
         } else {
-          setIsAdmin(false)
+          if (isMounted) setIsAdmin(false)
         }
-        setLoading(false)
+        if (isMounted) setLoading(false)
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      isMounted = false
+      clearTimeout(timeoutId)
+      subscription.unsubscribe()
+    }
   }, [])
 
   const checkAdmin = async (user) => {
